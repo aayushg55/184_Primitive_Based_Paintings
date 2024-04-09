@@ -13,12 +13,18 @@ class Triangle(Primitives):
         return f"Triangle with vertices {self.vertA}, {self.vertB}, {self.vertC}; colour {self.colour}; alpha {self.alpha}; isBrushed {self.isBrushed}."
     
     def fill(self, image):
-        overlay = image.copy()
-        output = image.copy()
-        points = np.array([self.vertA, self.vertB, self.vertC])
-        cv2.fillPoly(image, [points], color=self.colour)
-        cv2.addWeighted(overlay, self.alpha, output, 1 - self.alpha, 0, output)
-        return output
+        if not(self.isBrushed):
+            points = np.array([self.vertA, self.vertB, self.vertC])
+            if self.alpha == 1:
+                cv2.fillPoly(image, [points], color=self.color)
+            else:
+                overlay = np.zeros_like(image)
+                cv2.fillPoly(overlay, [points], color=self.color)
+                cv2.addWeighted(overlay, self.alpha, image, 1 - self.alpha, 0, image)
+        else:
+            pass
+        
+
     
     def area(self):
         ab = np.array(self.vertB) - np.array(self.vertA)
