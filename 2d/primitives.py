@@ -12,8 +12,7 @@ class Primitives:
     def fill(self):
         pass
     
-    def generate(self):
-        pass
+
     
     
     
