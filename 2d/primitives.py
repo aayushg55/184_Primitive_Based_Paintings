@@ -9,10 +9,14 @@ class Primitives:
     def info(self):
         pass
     
+    def setColour(self, colour):
+        pass
+    
     def fill(self):
         pass
     
-
+    def svg(self):
+        pass
     
     
     
