@@ -1,6 +1,7 @@
 from primitives import Primitives
 import numpy as np
 import cv2
+import random
 
 class Triangle(Primitives):
     def __init__(self, colour, alpha, isBrushed, vertA, vertB, vertC, W, H):
@@ -40,8 +41,6 @@ class Triangle(Primitives):
         
         return svg_str
         
-
-    
     def area(self):
         ab = np.array(self.vertB) - np.array(self.vertA)
         ac = np.array(self.vertC) - np.array(self.vertA)

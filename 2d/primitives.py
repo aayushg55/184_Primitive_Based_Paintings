@@ -5,16 +5,20 @@ class Primitives:
         self.alpha = alpha
         self.isBrushed = isBrushed
         self.shapeType = shapeType
+        
     @abstractmethod    
     def info(self):
         pass
     
+    @abstractmethod
     def setColour(self, colour):
         pass
     
-    def fill(self):
+    @abstractmethod    
+    def fill(self, image):
         pass
     
+    @abstractmethod
     def svg(self):
         pass
     
