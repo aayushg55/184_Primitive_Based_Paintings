@@ -11,28 +11,31 @@ class State:
         self.primitive = primitive
         self.height_map = height_map
         
-        self.h, self.w = height_map.shape
+        self.h, self.w = height_map.shape[:2]
+        self.canvas_h, self.canvas_w = self.target.shape[:2]
         self.buffer = np.zeros_like(target)
         
+        
+        
     def energy(self):
-        if self.score < 0:
-            colour = self.primitive.optimal_color_full(self.target, self.current)
-            err_dict = self.primitive.get_patch_error(self.target, self.current, colour)
-             
-            self.score += err_dict['newPatchError'] - err_dict['oldPatchError']
-            
+        #colour = self.primitive.optimal_color_full(self.target, self.current)
+        colour = self.primitive.optimal_color_fast(self.target, self.current)
+        self.primitive.color = colour
+        err_dict = self.primitive.get_patch_error(self.target, self.current, colour)
+        print("err calc: ", err_dict)
+        self.score += err_dict['newPatchError'] - err_dict['oldPatchError']   
         return self.score
 
     def do_move(self):
         old_state = self.copy()
         self.primitive.mutate()
 
-        self.score = -1
+        # self.score = -1
         return old_state
 
     def undo_move(self, old_state):
-        self.state.score = old_state.score
-        self.state.primitive = old_state.primitive
+        self.score = old_state.score
+        self.primitive = old_state.primitive
 
     def copy(self):
         new_state = State(self.height_map, self.target, self.current, self.score, self.primitive.copy())

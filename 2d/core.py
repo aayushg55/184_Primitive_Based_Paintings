@@ -6,8 +6,8 @@ def differenceFull(current, target):
     h, w = target.shape[0], target.shape[1]
 
     #Assuming 'current' and 'target' are both NumPy arrays of shape [h,w,3]
-    difference=(current-target).abs()
-    loss = np.sqrt(np.sum(np.square(difference)))
+    difference=np.abs(current-target)
+    loss = np.sum(np.square(difference))
     
     return loss
             
@@ -41,17 +41,17 @@ def drawShape(current, primitive, colour, height_map):
 
 def bilinear_interoplation(coordinate, targetImage): 
     h, w = targetImage.shape[:2]
-    min_x = max(np.floor(coordinate[0]), 0)
-    max_x = min(np.ceil(coordinate[0]), w-1)
-    min_y = max(np.floor(coordinate[1]), 0)
-    max_y = min(np.ceil(coordinate[1]), h-1)
+    min_x = int(max(np.floor(coordinate[0]), 0))
+    max_x = int(min(np.ceil(coordinate[0]), w-1))
+    min_y = int(max(np.floor(coordinate[1]), 0))
+    max_y = int(min(np.ceil(coordinate[1]), h-1))
     
     min_x_weight = coordinate[0] - min_x
     max_x_weight = 1 - min_x_weight
     min_y_weight = coordinate[1] - min_y
     max_y_weight = 1 - min_y_weight
 
-    return targetImage[min_y,min_x] * min_y*min_x + targetImage[min_y,max_x] * min_y*max_x + targetImage[max_y,max_x] * max_y*max_x + targetImage[max_y,min_x] * max_y*min_x
+    return targetImage[min_y,min_x] * min_y_weight*min_x_weight + targetImage[min_y,max_x] * min_y_weight*max_x_weight + targetImage[max_y,max_x] * max_y_weight*max_x_weight + targetImage[max_y,min_x] * max_y_weight*min_x_weight
 
 def interpolate_color(coordinate, targetImage): 
     return bilinear_interoplation(coordinate, targetImage)
@@ -70,8 +70,8 @@ def rotate_image(image, angle, scale=1.0):
 def translate_and_pad_image(image, x, y, output_size):
     (h, w) = output_size
     canvas = np.zeros((h, w, 4), dtype=np.float32)
-    x_offset = max(0, min(w, x))
-    y_offset = max(0, min(h, y))
+    x_offset = int(max(0, min(w, x)))
+    y_offset = int(max(0, min(h, y)))
     end_x = min(x_offset + image.shape[1], w)
     end_y = min(y_offset + image.shape[0], h)
     canvas[y_offset:end_y, x_offset:end_x, :] = image[:end_y-y_offset, :end_x-x_offset, :]
@@ -83,16 +83,16 @@ def alpha_composite(base, overlay):
     composite = overlay[:,:,:3] * alpha_overlay + base[:,:,:3] * (1 - alpha_overlay)
     return composite
 
-def addStroke(overlay_image, color, rotation, xshift, yshift, base_image):
+def addStroke(height_map, color, rotation, xshift, yshift, base_image):
     """
     overlay_image should be the 
     """
-    grayscale = 1.0 - cv2.cvtColor(overlay_image, cv2.COLOR_BGR2GRAY) / 255.0
-    color_overlay = np.zeros((overlay_image.shape[0], overlay_image.shape[1], 3), dtype=np.float32)
-    color_overlay[:,:,0] = color[0] / 255.0  # Blue channel
-    color_overlay[:,:,1] = color[1] / 255.0  # Green channel
-    color_overlay[:,:,2] = color[2] / 255.0  # Red channel
-    overlay_image = cv2.merge((color_overlay[:, :, 0], color_overlay[:, :, 1], color_overlay[:, :, 2], grayscale))
+    
+    color_overlay = np.zeros((height_map.shape[0], height_map.shape[1], 3), dtype=np.float32)
+    color_overlay[:,:,0] = color[0]  # Blue channel
+    color_overlay[:,:,1] = color[1]  # Green channel
+    color_overlay[:,:,2] = color[2]  # Red channel
+    overlay_image = cv2.merge((color_overlay[:, :, 0], color_overlay[:, :, 1], color_overlay[:, :, 2], height_map))
 
     rotated_overlay = rotate_image(overlay_image, rotation)
     translated_and_padded_overlay = translate_and_pad_image(rotated_overlay, xshift, yshift, base_image.shape[:2])

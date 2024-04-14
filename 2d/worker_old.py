@@ -8,10 +8,13 @@ from optimize import *
 from state import *
 import os
 
-class Worker:
-    def __init__(self, worker_idx, num_explorations, num_opt_iter, num_random_state_trials):
+class Worker(multiprocessing.Process):
+    def __init__(self, state_queue, result_queue, worker_idx, num_explorations, num_opt_iter, num_random_state_trials):
+        super().__init__()
         self.seed = worker_idx
         self.state = None
+        self.state_queue = state_queue
+        self.result_queue = result_queue
 
         np.random.seed(self.seed)
         
@@ -20,12 +23,20 @@ class Worker:
         self.num_random_state_trials = num_random_state_trials
 
 
-    def run(self, state):
-        self.state = state
-        self.best_hill_climb_state()
-        print("finished best hill climb in worker")
-        print(f"putting {self.state} onto queue")
-        return self.state
+    def run(self):
+        try: 
+            self.state = self.state_queue.get()
+            self.best_hill_climb_state()
+            print("finished best hill climb in worker")
+            print(f"putting {self.state} onto queue")
+            self.result_queue.put(self.state)
+            print("put onto queue!!")
+        except Exception as e:
+            print(f"Error in worker: {e}")
+        finally:
+            print("Worker is exiting...")
+            # os._exit(0)  # Forcefully terminates the current process
+
 
 
     def best_hill_climb_state(self):
@@ -64,6 +75,6 @@ class Worker:
     
     def random_state(self):
         # Sets state to have a new randomly perturbed primitive
-        self.state.primitive = BrushStroke2D(self.state.height_map, self.state.canvas_h, self.state.canvas_w)
+        self.state.primitive = BrushStroke2D(self.state.height_map)
         # self.state.score = -1
         return self.state

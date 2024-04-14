@@ -1,0 +1,5 @@
+python3 main.py --num_explorations 1 \
+ --num_opt_iter 1 \
+ --num_random_state_trials 1 \
+ --num_primitives 1 
+ 

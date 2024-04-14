@@ -31,10 +31,14 @@ class Model:
         
         self.workers = []
         self.num_workers = num_workers
+        self.results_queue = JoinableQueue()
+        self.state_queue = JoinableQueue()
 
 
         for i in range(num_workers):
             worker = Worker(
+                self.state_queue, 
+                self.results_queue, 
                 i, 
                 num_explorations // num_workers, # divide work among workers
                 num_opt_iter, 
@@ -52,13 +56,29 @@ class Model:
         brush_height_map = self.brush_stroke_height_maps[brush_idx]
         
         current_state = State(brush_height_map, self.source_img, self.current_img, score = self.scores[-1])
+        for _ in range(self.num_workers):
+            self.state_queue.put(current_state)
             
         # Start all the workers
         print("have ", self.num_workers, " workers")
-        best_states = []
         for worker in self.workers:
-            best_state = worker.run(current_state)
-            best_states.append(best_state)
+            print(worker)
+            worker.start()
+        print("workers started")
+
+        time.sleep(5)
+
+        
+        # Wait for all the workers to finish
+        for worker in self.workers:
+            print(worker)
+            worker.join()
+        print("workers joined")
+        # Collect the results from the queue
+        best_states = []
+        while not self.results_queue.empty():
+            result = self.results_queue.get()
+            best_states.append(result)
         
         print(best_states)
         assert len(best_states) == self.num_workers
@@ -90,15 +110,11 @@ class Model:
         stroke = best_state.primitive
         
         colour = stroke.color
-        print("opt color being added ", colour)
         rotation = stroke.theta
         translation = stroke.t
         img = addStroke(strokeAdded, colour, rotation, translation[0], translation[1], prev_img)
-        print(f"the largest element of the output image is {np.max(img)}")
         
         self.scores.append(best_state.score)
         print("New score:", best_state.score)
         self.primitives.append(stroke)
         self.current_img = img
-        print(f"the largest element of the output image is {np.max(img)}")
-
