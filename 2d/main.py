@@ -13,7 +13,7 @@ def parse_args():
     parser.add_argument('--num_explorations', type=int, default=16, help='Number of exploration steps.')
     parser.add_argument('--num_opt_iter', type=int, default=100, help='Number of optimization iterations.')
     parser.add_argument('--num_random_state_trials', type=int, default=1000, help='Number of random state trials.')
-    parser.add_argument('--output_img_path', type=str, default="out/output.jpg", help='Path to save the output image.')
+    parser.add_argument('--output_img_path', '-o', type=str, default="out/output.jpg", help='Path to save the output image.')
     parser.add_argument('--num_primitives', type=int, default=100, help='Number of primitives to add')
     parser.add_argument('--verbosity', '-v', type=str, default='info', help='Verbosity level (debug, info, warning, error, critical)')
 
@@ -27,6 +27,16 @@ def load_brush_stroke_height_maps():
     height_map = 1.0 - cv2.cvtColor(overlay_image, cv2.COLOR_BGR2GRAY) / 255.0
 
     return [height_map]  # Example of 5 random brush strokes
+
+def write_primitive_details(model, file_path):
+    with open(file_path, 'w') as file:
+        for i, primitive in enumerate(model.primitives):
+            t_str = ','.join(map(str, primitive.t))
+            theta_str = str(primitive.theta)
+            color_str = ','.join(map(str, primitive.color))
+            file.write(f"Primitive {i}: t=[{t_str}], theta={theta_str}, color=[{color_str}]\n")
+            logging.info(f"Primitive {i}: t=[{t_str}], theta={theta_str}, color=[{color_str}]")
+
 
 def main():
     args = parse_args()
@@ -84,8 +94,8 @@ def main():
     cv2.imwrite(args.output_img_path, output_img)
     logging.info(f"Output image saved to {args.output_img_path}")
     
-    for i, primitive in enumerate(model.primitives):
-        logging.info(f"Primitive {i}: {primitive.t}, {primitive.theta}, {primitive.color}")
+    file_path = args.output_img_path.split('.')[0] + '_primitives.txt'
+    write_primitive_details(model, file_path)
 
 if __name__ == '__main__':
     main()

@@ -37,7 +37,49 @@ def drawShape(current, primitive, colour, height_map):
             original_colour=current[wy,wx]
             blended_colour=(1-alpha)*original_colour+alpha*colour
             current[wy,wx]=blended_colour
-            
+
+def fast_interp(coordinates, image):
+    return fast_interpolate_colors_nn(coordinates, image)
+
+def fast_interpolate_colors_bilinear(coordinates, image):
+    x = coordinates[0]
+    y = coordinates[1]
+    x0 = np.floor(x).astype(int)
+    x1 = x0 + 1
+    y0 = np.floor(y).astype(int)
+    y1 = y0 + 1
+
+    x0 = np.clip(x0, 0, image.shape[1] - 1)
+    x1 = np.clip(x1, 0, image.shape[1] - 1)
+    y0 = np.clip(y0, 0, image.shape[0] - 1)
+    y1 = np.clip(y1, 0, image.shape[0] - 1)
+
+    Ia = image[y0, x0]
+    Ib = image[y1, x0]
+    Ic = image[y0, x1]
+    Id = image[y1, x1]
+
+    wa = (x1 - x) * (y1 - y)
+    wb = (x1 - x) * (y - y0)
+    wc = (x - x0) * (y1 - y)
+    wd = (x - x0) * (y - y0)
+
+    return wa[:, np.newaxis] * Ia + wb[:, np.newaxis] * Ib + wc[:, np.newaxis] * Ic + wd[:, np.newaxis] * Id
+
+def fast_interpolate_colors_nn(coordinates, image):
+    x = coordinates[0]
+    y = coordinates[1]
+    
+    # Round coordinates to nearest integer
+    x_round = np.round(x).astype(int)
+    y_round = np.round(y).astype(int)
+    
+    # Clip coordinates to image bounds
+    x_clipped = np.clip(x_round, 0, image.shape[1] - 1)
+    y_clipped = np.clip(y_round, 0, image.shape[0] - 1)
+    
+    # Use integer array indexing to get nearest-neighbor pixel values
+    return image[y_clipped, x_clipped]            
 
 def bilinear_interoplation(coordinate, targetImage): 
     h, w = targetImage.shape[:2]
