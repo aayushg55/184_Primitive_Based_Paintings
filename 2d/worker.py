@@ -7,6 +7,7 @@ from brush_stroke_2d import BrushStroke2D
 from optimize import *
 from state import *
 import os
+import logging
 
 class Worker:
     def __init__(self, worker_idx, num_explorations, num_opt_iter, num_random_state_trials):
@@ -23,7 +24,7 @@ class Worker:
     def run(self, state):
         self.state = state
         self.best_hill_climb_state()
-        print("finished best hill climb in worker \n")
+        logging.debug("finished best hill climb in worker \n")
         return self.state
 
 
@@ -32,20 +33,20 @@ class Worker:
         best_primitive = None
         
         for i in range(self.num_explorations):
-            print("exploration: ", i)
+            logging.debug(f"exploration: {i}")
             state = self.best_random_state()
-            print("found best random state")
+            logging.debug(f"found best random state")
             start_energy = state.energy()
-            print("about to hill climb")
+            logging.debug(f"about to hill climb")
             state = hill_climb(state, self.num_opt_iter)
-            print("hill climbed")
+            logging.debug(f"hill climbed")
             energy = state.energy()
             if energy < best_energy:
                 best_energy = energy
                 best_primitive = state.primitive
-            print()
+            logging.debug("")
                 
-        print("finished explorations, best_energy is ", best_energy)
+        logging.debug(f"finished explorations, best_energy is {best_energy}")
         self.state.primitive = best_primitive
         self.state.recalculate_score = False
         self.state.score = best_energy
@@ -58,20 +59,18 @@ class Worker:
         
         for i in range(self.num_random_state_trials):
             state = self.random_state()
-            print("iter: ", i, ". trying random state: ", state.primitive.t, state.primitive.theta)
+            logging.debug(f"iter: {i}. trying random state: {state.primitive.t},  {state.primitive.theta}")
             energy = state.energy()
-            print("random state energy: ", energy)
+            logging.debug(f"random state energy: {energy} ")
             if energy < best_energy:
                 best_energy = energy
                 best_primitive = state.primitive
-                
-        # print("best_random_state energye: ", best_energy)
-        # print("color after best random_state: ", best_primitive.color)
+
         self.state.primitive = best_primitive
         self.state.recalculate_score = state.recalculate_score
         self.state.score = state.score
-        print(f"best random state energy: {best_energy}, recalculate_score: {self.state.recalculate_score}")
-        print(f"best random state (t,theta,color): {best_primitive.t}, {best_primitive.theta}, {best_primitive.color}")
+        logging.debug(f"best random state energy: {best_energy}, recalculate_score: {self.state.recalculate_score}")
+        logging.debug(f"best random state (t,theta,color): {best_primitive.t}, {best_primitive.theta}, {best_primitive.color}")
         return self.state
     
     def random_state(self):

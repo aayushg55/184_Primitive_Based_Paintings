@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from model import Model
 import os
+import logging
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Instantiate and run the model with command line parameters.')
@@ -13,6 +14,7 @@ def parse_args():
     parser.add_argument('--num_random_state_trials', type=int, default=1000, help='Number of random state trials.')
     parser.add_argument('--output_img_path', type=str, default="out/output.jpg", help='Path to save the output image.')
     parser.add_argument('--num_primitives', type=int, default=100, help='Number of primitives to add')
+    parser.add_argument('--verbosity', '-v', type=str, default='info', help='Verbosity level (debug, info, warning, error, critical)')
 
     return parser.parse_args()
 
@@ -28,6 +30,17 @@ def load_brush_stroke_height_maps():
 def main():
     args = parse_args()
     
+    verbosity_map = {
+        'debug': logging.DEBUG,
+        'info': logging.INFO,
+        'warning': logging.WARNING,
+        'error': logging.ERROR,
+        'critical': logging.CRITICAL
+    }
+    log_level = verbosity_map.get(args.verbosity.lower(), logging.INFO)
+    print(f"Setting log level to {args.verbosity.lower()}")
+    logging.basicConfig(level=log_level, format='%(message)s')
+
     # Load source image
     source_img = cv2.imread(args.source_img_path, cv2.IMREAD_COLOR)
     if source_img is None:
@@ -57,15 +70,14 @@ def main():
     # Example step or processing (add your actual method calls)
     for i in range(args.num_primitives): 
         model.step()
-        print("finished step ", i)
-        print("************************************")
+        logging.info(f"finished step {i}")
+        logging.info("************************************")
     
 
     # Save the resulting image
     output_img = (model.current_img * 255).astype(np.uint8)  # Convert back to uint8
     cv2.imwrite(args.output_img_path, output_img)
-    print(f"Output image saved to {args.output_img_path}")
-    print(np.max(output_img))
+    logging.info(f"Output image saved to {args.output_img_path}")
 
 if __name__ == '__main__':
     main()

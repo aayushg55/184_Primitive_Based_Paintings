@@ -1,6 +1,7 @@
 from primitives import Primitives
 from core import *
 import numpy as np
+import logging
 
 class BrushStroke2D(Primitives):
     def __init__(self, heightMap, canvas_h, canvas_w, color=np.zeros(3), theta=None, t=None):
@@ -76,25 +77,20 @@ class BrushStroke2D(Primitives):
         for y in range(self.h):
             for x in range(self.w): 
                 opacity = self.heightMap[y, x]
-                # print(f"opacity {opacity}")
                 if opacity == 0.0:
                     continue
                 image_coordinate = self.transform(x, y)
                 if 0 <= image_coordinate[0] <= img_w and 0 <= image_coordinate[1] <= img_h:
                     image_pixel = interpolate_color(image_coordinate, targetImage)
                     current_pixel = interpolate_color(image_coordinate, currentCanvas)
-                    # print(f"image pixel: {image_pixel}, current pixel: {current_pixel}")
                     pix_opt_color = (image_pixel - (1-opacity)*current_pixel)/opacity
                     max_color = np.max(pix_opt_color)
                     if max_color > 1:
                         pix_opt_color /= max_color
-                    # print(f"per pix opt color: {pix_opt_color}")
-                    # if np.any(pix_opt_color > 1):
-                        # print(f"opacity: {opacity}, image_pixel: {image_pixel}, current_pixel: {current_pixel}")
-                    
+
                     optimal_color += pix_opt_color
                     num_pixels += 1
-        print(f"num pix: {num_pixels}")
+        logging.debug(f"num pix: {num_pixels}")
         self.color = optimal_color / num_pixels
         return self.color
     
@@ -106,25 +102,25 @@ class BrushStroke2D(Primitives):
         for y in range(self.h):
             for x in range(self.w): 
                 opacity = self.heightMap[y, x]
-                # print(f"opacity {opacity}")
+                # logging.debug(f"opacity {opacity}")
                 if opacity == 0.0:
                     continue
                 image_coordinate = self.transform(x, y)
                 if 0 <= image_coordinate[0] <= img_w and 0 <= image_coordinate[1] <= img_h:
                     image_pixel = interpolate_color(image_coordinate, targetImage)
                     current_pixel = interpolate_color(image_coordinate, currentCanvas)
-                    # print(f"image pixel: {image_pixel}, current pixel: {current_pixel}")
+                    # logging.debug(f"image pixel: {image_pixel}, current pixel: {current_pixel}")
                     pix_opt_color = (image_pixel - (1-opacity)*current_pixel)/opacity
                     max_color = np.max(pix_opt_color)
                     if max_color > 1:
                         pix_opt_color /= max_color
-                    # print(f"per pix opt color: {pix_opt_color}")
+                    # logging.debug(f"per pix opt color: {pix_opt_color}")
                     # if np.any(pix_opt_color > 1):
-                        # print(f"opacity: {opacity}, image_pixel: {image_pixel}, current_pixel: {current_pixel}")
+                        # logging.debug(f"opacity: {opacity}, image_pixel: {image_pixel}, current_pixel: {current_pixel}")
                     
                     optimal_color += pix_opt_color
                     num_pixels += 1
-        print(f"num pix: {num_pixels}")
+        logging.debug(f"num pix: {num_pixels}")
         self.color = optimal_color / num_pixels
         return self.color
 
@@ -169,14 +165,14 @@ class BrushStroke2D(Primitives):
         error = 0
         num_pixels = 0
         
-        print(f"patch err opt color {optimalColor}")
-        print(f"patch err with t as {self.t} and theta as {self.theta}")
+        logging.debug(f"patch err opt color {optimalColor}")
+        logging.debug(f"patch err with t as {self.t} and theta as {self.theta}")
 
         for y in range(self.h):
             for x in range(self.w): 
                 opacity = self.heightMap[y, x]
                 image_coordinate = self.transform(x, y)
-                # print(f"x, y {x}, {y}; image coord {image_coordinate}")
+                # logging.debug(f"x, y {x}, {y}; image coord {image_coordinate}")
                 if 0<=image_coordinate[0] < self.canvas_w and 0 <= image_coordinate[1] < self.canvas_h:
                     image_pixel = interpolate_color(image_coordinate, targetImage)
                     current_pixel = interpolate_color(image_coordinate, currentCanvas)
@@ -184,14 +180,14 @@ class BrushStroke2D(Primitives):
                     pix_error = np.linalg.norm((new_pixel - image_pixel))** 2
                     prior_pix_error = np.linalg.norm((current_pixel - image_pixel)) ** 2
                     if pix_error > 3:
-                        print(f"new_pixel {new_pixel}")
-                        print(f"new pix err {pix_error}, prior {prior_pix_error}")
+                        logging.debug(f"new_pixel {new_pixel}")
+                        logging.debug(f"new pix err {pix_error}, prior {prior_pix_error}")
                     
-                    # print(f"pix err {pix_error}, prior {prior_pix_error}")
+                    # logging.debug(f"pix err {pix_error}, prior {prior_pix_error}")
                     error += pix_error
                     prior_error += prior_pix_error
                     num_pixels += 1
-        print(f"num pix: {num_pixels}")
+        logging.debug(f"num pix: {num_pixels}")
         return {"newPatchError": error, "oldPatchError": prior_error}
     
     def copy(self):

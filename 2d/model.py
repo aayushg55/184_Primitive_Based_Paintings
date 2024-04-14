@@ -8,6 +8,7 @@ from worker import Worker
 from primitives import Primitives
 from state import State
 from core import *
+import logging
 
 class Model:
     def __init__(self, source_img, output_h, output_w, num_workers, brush_stroke_height_maps, 
@@ -45,7 +46,7 @@ class Model:
         
         initial_loss = differenceFull(self.current_img, self.source_img)
         self.scores.append(initial_loss)
-        print("Initial Score: ", initial_loss)
+        logging.info(f"Initial Score: {initial_loss}")
         
 
     def multiprocess_hill_climb(self, brush_idx):
@@ -71,16 +72,16 @@ class Model:
         best_energy = np.inf
         best_state = None
         
-        print("checking best states from all workers' hill climb")
+        logging.debug("checking best states from all workers' hill climb")
         for state in best_states:
             energy = state.energy()
             if energy < best_energy:
                 best_energy = energy
                 best_state = state
         
+        logging.debug(f"best energy from all workers' hill climb: {best_energy}")
         return best_state
             
-        
     def step(self):
         brush_idx = np.random.randint(low=0, high=self.num_brush_strokes)
         best_state = self.multiprocess_hill_climb(brush_idx)
@@ -92,15 +93,14 @@ class Model:
         stroke = best_state.primitive
         
         colour = stroke.color
-        print("opt color being added ", colour)
+        logging.debug(f"opt color being added {colour}")
         rotation = stroke.theta
         translation = stroke.t
         img = addStroke(strokeAdded, colour, rotation, translation[0], translation[1], prev_img)
-        print(f"the largest element of the output image is {np.max(img)}")
         
         self.scores.append(best_state.score)
-        print("New score:", best_state.score)
+        logging.debug(f"New score: {best_state.score}")
         self.primitives.append(stroke)
         self.current_img = img
-        print(f"the largest element of the output image is {np.max(img)}")
+        logging.debug(f"the largest element of the output image is {np.max(img)}")
 

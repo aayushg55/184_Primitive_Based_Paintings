@@ -1,6 +1,7 @@
 import numpy as np
 from brush_stroke_2d import BrushStroke2D
 from core import *
+import logging
 
 class State:
     def __init__(self, height_map, target, current, score=np.inf, canvas_score=np.inf, primitive=None, recalculate_score=False):
@@ -27,9 +28,9 @@ class State:
             colour = self.primitive.optimal_color_fast(self.target, self.current)
             self.primitive.color = colour
             err_dict = self.primitive.get_patch_error(self.target, self.current, colour)
-            print("err calc: ", err_dict)
+            logging.debug(f"err calc: {err_dict}")
             err_reduction = err_dict['newPatchError'] - err_dict['oldPatchError']
-            print(f"err reduction: {err_reduction}")
+            logging.debug(f"err reduction: {err_reduction}")
             self.score = self.canvas_score + err_reduction # score for current canvas with current primitive added
             self.recalculate_score = False 
         return self.score
