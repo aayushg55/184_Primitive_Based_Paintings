@@ -2,6 +2,7 @@ from primitives import Primitives
 from core import *
 import numpy as np
 import logging
+import time
 
 class BrushStroke2D(Primitives):
     def __init__(self, heightMap, canvas_h, canvas_w, color=np.zeros(3), theta=None, t=None):
@@ -40,15 +41,15 @@ class BrushStroke2D(Primitives):
         self.theta = np.random.uniform(0, 180)
         self.set_R()
 
-
     def mutate(self):
         self.theta += np.random.uniform(0, 30)
         self.set_R()
         t_mutation = np.array([np.random.randint(int(-0.05*self.canvas_w), int(0.05*self.canvas_w)), np.random.randint(int(-0.05*self.canvas_h), int(0.05*self.canvas_h))])
         self.t += t_mutation
         
-    def transform(self, x, y):  
+    def transform(self, x, y): 
         points = np.stack([x, y]).astype(np.float64)
+        # logging.debug(f"points: {points.shape}")
         
         # Expand dimensions to shape (2, 1) if points is 1D
         if points.ndim == 1:
@@ -134,18 +135,31 @@ class BrushStroke2D(Primitives):
         mask = opacities > 0
         xs, ys = xs[mask], ys[mask]
         opacities = opacities[mask]
+        
+        num_removed = self.h*self.w - xs.shape[0]
+        logging.debug(f"removed {num_removed} zero opacity pixels, remaining {xs.shape[0]} pixels, mean opacity {np.mean(opacities)}")
+        # if num_removed > 0.75 * self.h * self.w:
+        #     logging.warning("REMOVED MANY zero-opacity pixels!!")
 
         # Transform coordinates and apply boundary check
         transformed = self.transform(xs, ys)
-        valid_mask = (transformed[0, :] < targetImage.shape[1]) & (transformed[0, :] >= 0) & \
-                    (transformed[1, :] < targetImage.shape[0]) & (transformed[1, :] >= 0)
-            
+        valid_mask = (transformed[0, :] < self.canvas_w) & (transformed[0, :] >= 0) & \
+                    (transformed[1, :] < self.canvas_h) & (transformed[1, :] >= 0)
+        
         transformed_valid = transformed[:, valid_mask]
         filtered_opacities = opacities.flatten()[valid_mask]
         
+        num_removed = xs.shape[0] - transformed_valid.shape[1]
+        logging.debug(f"removed {num_removed} out of bounds pixels, remaining {transformed_valid.shape[1]} pixels")
+        if transformed_valid.shape[1] < 0.05 * self.h * self.w:
+            logging.warning("VERY FEW VALID PIXELS!!!!")
+            return None
+        
         # Interpolate colors
+        time_now = time.time()
         image_pixels = np.array([interpolate_color(transformed_valid[:, i], targetImage) for i in range(transformed_valid.shape[1])])
         current_pixels = np.array([interpolate_color(transformed_valid[:, i], currentCanvas) for i in range(transformed_valid.shape[1])])
+        logging.info(f"interpolation in color comp took {time.time() - time_now:.4f} seconds")
         
         # Compute optimal colors
         pix_opt_colors = (image_pixels - (1 - filtered_opacities[:, np.newaxis]) * current_pixels) / filtered_opacities[:, np.newaxis]

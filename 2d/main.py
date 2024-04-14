@@ -4,6 +4,7 @@ import cv2
 from model import Model
 import os
 import logging
+import time
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Instantiate and run the model with command line parameters.')
@@ -68,16 +69,23 @@ def main():
     )
     
     # Example step or processing (add your actual method calls)
-    for i in range(args.num_primitives): 
+    start_time = time.time()
+    for i in range(args.num_primitives):
+        cur_time = time.time()
         model.step()
         logging.info(f"finished step {i}")
         logging.info("************************************")
-    
+        logging.info(f"step took {time.time() - cur_time:.4f} seconds")
+        
+    logging.info(f"Total time: {time.time() - start_time:.4f} seconds")
 
     # Save the resulting image
     output_img = (model.current_img * 255).astype(np.uint8)  # Convert back to uint8
     cv2.imwrite(args.output_img_path, output_img)
     logging.info(f"Output image saved to {args.output_img_path}")
+    
+    for i, primitive in enumerate(model.primitives):
+        logging.info(f"Primitive {i}: {primitive.t}, {primitive.theta}, {primitive.color}")
 
 if __name__ == '__main__':
     main()

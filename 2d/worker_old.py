@@ -68,7 +68,7 @@ class Worker(multiprocessing.Process):
                 best_energy = energy
                 best_primitive = state.primitive
                 
-        print("best_random_state energye: ", best_energy)
+        print("best_random_state energy: ", best_energy)
         print("color after best random_state: ", best_primitive.color)
         self.state.primitive = best_primitive
         return self.state

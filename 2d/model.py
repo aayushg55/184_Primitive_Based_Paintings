@@ -1,6 +1,7 @@
 import multiprocessing
 from multiprocessing import JoinableQueue
 import random
+from typing import List
 
 import time
 import numpy as np
@@ -30,7 +31,7 @@ class Model:
         self.brush_stroke_height_maps = brush_stroke_height_maps
         self.num_brush_strokes = len(self.brush_stroke_height_maps)
         
-        self.workers = []
+        self.workers: List[Worker] = []
         self.num_workers = num_workers
 
 

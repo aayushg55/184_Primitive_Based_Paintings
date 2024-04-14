@@ -2,6 +2,7 @@ import numpy as np
 from brush_stroke_2d import BrushStroke2D
 from core import *
 import logging
+import time
 
 class State:
     def __init__(self, height_map, target, current, score=np.inf, canvas_score=np.inf, primitive=None, recalculate_score=False):
@@ -23,16 +24,30 @@ class State:
         self.recalculate_score = recalculate_score
         
     def energy(self):
-        # colour = self.primitive.optimal_color_full(self.target, self.current)
         if self.recalculate_score:
-            colour = self.primitive.optimal_color_fast(self.target, self.current)
-            self.primitive.color = colour
-            err_dict = self.primitive.get_patch_error(self.target, self.current, colour)
+            start_time = time.time()
+            # color = self.primitive.optimal_color_full(self.target, self.current)
+            color = self.primitive.optimal_color_fast(self.target, self.current)
+            end_time = time.time()
+            logging.info(f"optimal_color_fast took {end_time - start_time:.4f} seconds")
+            
+            if np.any(color) == None:
+                return np.inf
+            self.primitive.color = color
+            logging.debug(f"in energy calc - color: {color}")
+            
+            cur_time = time.time()
+            err_dict = self.primitive.get_patch_error(self.target, self.current, color)
+            end_time = time.time()
+            logging.info(f"patch err took {end_time - cur_time:.4f} seconds")
+            
             logging.debug(f"err calc: {err_dict}")
             err_reduction = err_dict['newPatchError'] - err_dict['oldPatchError']
             logging.debug(f"err reduction: {err_reduction}")
             self.score = self.canvas_score + err_reduction # score for current canvas with current primitive added
             self.recalculate_score = False 
+            
+            logging.info(f"total energy recalc took {time.time() - start_time:.4f} seconds")
         return self.score
 
     def do_move(self):
