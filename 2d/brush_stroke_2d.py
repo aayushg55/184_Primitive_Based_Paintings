@@ -157,8 +157,10 @@ class BrushStroke2D(Primitives):
         
         # Interpolate colors
         time_now = time.time()
-        image_pixels = np.array([interpolate_color(transformed_valid[:, i], targetImage) for i in range(transformed_valid.shape[1])])
-        current_pixels = np.array([interpolate_color(transformed_valid[:, i], currentCanvas) for i in range(transformed_valid.shape[1])])
+        image_pixels = interpolate_colors(transformed_valid, targetImage)
+        current_pixels = interpolate_colors(transformed_valid, currentCanvas)
+        # image_pixels = np.array([interpolate_color(transformed_valid[:, i], targetImage) for i in range(transformed_valid.shape[1])])
+        # current_pixels = np.array([interpolate_color(transformed_valid[:, i], currentCanvas) for i in range(transformed_valid.shape[1])])
         logging.info(f"interpolation in color comp took {time.time() - time_now:.4f} seconds")
         
         # Compute optimal colors
@@ -207,3 +209,41 @@ class BrushStroke2D(Primitives):
     def copy(self):
         new_primitive = BrushStroke2D(self.heightMap, self.canvas_h, self.canvas_w, self.color.copy(), self.theta, self.t.copy())
         return new_primitive
+    
+def interpolate_colors(coordinates, image):
+    x = coordinates[0]
+    y = coordinates[1]
+    x0 = np.floor(x).astype(int)
+    x1 = x0 + 1
+    y0 = np.floor(y).astype(int)
+    y1 = y0 + 1
+
+    x0 = np.clip(x0, 0, image.shape[1] - 1)
+    x1 = np.clip(x1, 0, image.shape[1] - 1)
+    y0 = np.clip(y0, 0, image.shape[0] - 1)
+    y1 = np.clip(y1, 0, image.shape[0] - 1)
+
+    Ia = image[y0, x0]
+    Ib = image[y1, x0]
+    Ic = image[y0, x1]
+    Id = image[y1, x1]
+
+    wa = (x1 - x) * (y1 - y)
+    wb = (x1 - x) * (y - y0)
+    wc = (x - x0) * (y1 - y)
+    wd = (x - x0) * (y - y0)
+
+    return wa[:, np.newaxis] * Ia + wb[:, np.newaxis] * Ib + wc[:, np.newaxis] * Ic + wd[:, np.newaxis] * Id
+
+    """
+    alternative for interpolation, need to compare speed
+    def create_interp_grid(img):
+        X, Y = np.mgrid[:img.shape[0], :img.shape[1]]
+        points = np.dstack((X.ravel(), Y.ravel())).squeeze()
+        # Flatten img to use for interpolation
+        flat_img = einops.rearrange(img, ('h w c -> (h w) c'))
+        color_interp = scipy.interpolate.NearestNDInterpolator(points, flat_img)
+        return color_interp
+    
+    pixel_colors = color_interp((r_n, c_n))
+    """
