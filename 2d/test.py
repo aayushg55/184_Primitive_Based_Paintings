@@ -4,12 +4,14 @@ import numpy as np
 array_2d = np.array([[1, 2, 3],
                      [4, 5, 6]])
 
-# Example 1D boolean mask with shape (n,)
-mask = np.array([True, False, True])
+arr = np.ones((2,9539))
 
-print(mask.shape)
+# Example 1D boolean mask with shape (n,)
+mask = np.zeros(9539, dtype=bool)
+
+print(mask.shape, array_2d.shape)
 # Index the 2D array using the mask
-masked_array = array_2d[:, mask]
+masked_array = arr[:, mask]
 
 # Print the results
 print("Original 2D array:")

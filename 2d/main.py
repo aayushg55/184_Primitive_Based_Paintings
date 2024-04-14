@@ -54,12 +54,11 @@ def main():
         num_random_state_trials=args.num_random_state_trials
     )
     
-    
-    
     # Example step or processing (add your actual method calls)
     for i in range(args.num_primitives): 
         model.step()
         print("finished step ", i)
+        print("************************************")
     
 
     # Save the resulting image

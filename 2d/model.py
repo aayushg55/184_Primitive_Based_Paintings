@@ -51,22 +51,27 @@ class Model:
     def multiprocess_hill_climb(self, brush_idx):
         brush_height_map = self.brush_stroke_height_maps[brush_idx]
         
-        current_state = State(brush_height_map, self.source_img, self.current_img, score = self.scores[-1])
+        current_state = State(
+            height_map=brush_height_map, 
+            target=self.source_img,
+            current=self.current_img, 
+            score=self.scores[-1],
+            canvas_score=self.scores[-1],
+        )
             
         # Start all the workers
-        print("have ", self.num_workers, " workers")
         best_states = []
         for worker in self.workers:
             best_state = worker.run(current_state)
             best_states.append(best_state)
         
-        print(best_states)
         assert len(best_states) == self.num_workers
 
         # Process the results
         best_energy = np.inf
         best_state = None
         
+        print("checking best states from all workers' hill climb")
         for state in best_states:
             energy = state.energy()
             if energy < best_energy:
@@ -79,11 +84,8 @@ class Model:
     def step(self):
         brush_idx = np.random.randint(low=0, high=self.num_brush_strokes)
         best_state = self.multiprocess_hill_climb(brush_idx)
-        print(f"got best state for a signle step")
         self.update(best_state)
-        print("did update")
-	
-        
+	        
     def update(self, best_state):
         prev_img = self.current_img.copy()
         strokeAdded = best_state.height_map
