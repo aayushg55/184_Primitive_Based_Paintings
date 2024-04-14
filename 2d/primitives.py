@@ -22,7 +22,16 @@ class Primitives:
     def svg(self):
         pass
     
+    @abstractmethod
     def optimal_color_full(self, targetImage, currentCanvas):
+        pass
+    
+    @abstractmethod
+    def mutate(self):
+        pass
+       
+    @abstractmethod
+    def transform(self, x, y):
         pass
     
     

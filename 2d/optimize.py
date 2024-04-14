@@ -1,6 +1,8 @@
 import numpy as np
+from state import State
 
-def hill_climb(state, num_iter):
+def hill_climb(state: State, num_iter):
+    state = state.copy()
     best_state = state.copy()
     best_energy = state.energy()
     
@@ -10,8 +12,8 @@ def hill_climb(state, num_iter):
         
         if new_energy < best_energy:
             best_energy = new_energy
-            best_state = state.copy()
+            best_state = state
         else:
             state.undo_move(old_state)
             
-    return best_state
+    return best_state.copy()
