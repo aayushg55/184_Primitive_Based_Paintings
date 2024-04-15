@@ -37,7 +37,7 @@ class BrushStroke2D(Primitives):
                            [np.sin(self.theta), np.cos(self.theta)]])
     
     def randomize_parameters(self): 
-        self.t = np.array([np.random.randint(0,self.canvas_w), np.random.randint(0,self.canvas_h)])
+        self.t = np.array([np.random.randint(0,self.canvas_w-25), np.random.randint(0,self.canvas_h-25)])
         self.theta = np.random.uniform(0, 180)
         self.set_R()
 
@@ -46,6 +46,7 @@ class BrushStroke2D(Primitives):
         self.set_R()
         t_mutation = np.array([np.random.randint(int(-0.05*self.canvas_w), int(0.05*self.canvas_w)), np.random.randint(int(-0.05*self.canvas_h), int(0.05*self.canvas_h))])
         self.t += t_mutation
+        self.t = np.clip(self.t, np.array([0,0]), np.array([self.canvas_w-25, self.canvas_h-25]))
         
     def transform(self, x, y): 
         points = np.stack([x, y]).astype(np.float64)
@@ -58,7 +59,7 @@ class BrushStroke2D(Primitives):
         points -= self.c  
         
         transformed = self.R @ points
-        transformed += self.c
+        #transformed += self.c
         
         return transformed + self.t.reshape((2,1))
 
@@ -128,19 +129,24 @@ class BrushStroke2D(Primitives):
     
     def optimal_color_fast(self, targetImage, currentCanvas):
         # Generate a grid of coordinates
+        time_now = time.time() 
         xs, ys = np.meshgrid(np.arange(self.w, dtype=float), np.arange(self.h, dtype=float))
         opacities = self.heightMap
+        logging.info(f"meshgrid in color comp took {time.time() - time_now:.4f} seconds")
 
         # Filter out zero-opacity pixels early
+        time_now = time.time() 
         mask = opacities > 0
         xs, ys = xs[mask], ys[mask]
         opacities = opacities[mask]
-        
+        logging.info(f"opacity masking in color comp took {time.time() - time_now:.4f} seconds")
+
         num_removed = self.h*self.w - xs.shape[0]
         logging.debug(f"removed {num_removed} zero opacity pixels, remaining {xs.shape[0]} pixels, mean opacity {np.mean(opacities)}")
         # if num_removed > 0.75 * self.h * self.w:
         #     logging.warning("REMOVED MANY zero-opacity pixels!!")
 
+        time_now = time.time() 
         # Transform coordinates and apply boundary check
         transformed = self.transform(xs, ys)
         valid_mask = (transformed[0, :] < self.canvas_w) & (transformed[0, :] >= 0) & \
@@ -148,6 +154,7 @@ class BrushStroke2D(Primitives):
         
         transformed_valid = transformed[:, valid_mask]
         filtered_opacities = opacities.flatten()[valid_mask]
+        logging.info(f"valid masking in color comp took {time.time() - time_now:.4f} seconds")
         
         num_removed = xs.shape[0] - transformed_valid.shape[1]
         logging.debug(f"removed {num_removed} out of bounds pixels, remaining {transformed_valid.shape[1]} pixels")
@@ -159,8 +166,6 @@ class BrushStroke2D(Primitives):
         time_now = time.time()
         image_pixels = fast_interp(transformed_valid, targetImage)
         current_pixels = fast_interp(transformed_valid, currentCanvas)
-        # image_pixels = np.array([interpolate_color(transformed_valid[:, i], targetImage) for i in range(transformed_valid.shape[1])])
-        # current_pixels = np.array([interpolate_color(transformed_valid[:, i], currentCanvas) for i in range(transformed_valid.shape[1])])
         logging.info(f"interpolation in color comp took {time.time() - time_now:.4f} seconds")
         
         # Compute optimal colors
@@ -175,6 +180,52 @@ class BrushStroke2D(Primitives):
         optimal_color = np.mean(pix_opt_colors, axis=0)
         self.color = optimal_color
         return self.color
+
+    def get_patch_error_fast(self, targetImage, currentCanvas, optimalColor):         
+        # Generate a grid of coordinates
+        xs, ys = np.meshgrid(np.arange(self.w, dtype=float), np.arange(self.h, dtype=float))
+        opacities = self.heightMap
+
+        # Filter out zero-opacity pixels early
+        mask = opacities > 0
+        xs, ys = xs[mask], ys[mask]
+        opacities = opacities[mask]
+
+        num_removed = self.h*self.w - xs.shape[0]
+        logging.debug(f"removed {num_removed} zero opacity pixels, remaining {xs.shape[0]} pixels, mean opacity {np.mean(opacities)}")
+        # if num_removed > 0.75 * self.h * self.w:
+        #     logging.warning("REMOVED MANY zero-opacity pixels!!")
+
+        time_now = time.time() 
+        # Transform coordinates and apply boundary check
+        transformed = self.transform(xs, ys)
+        valid_mask = (transformed[0, :] < self.canvas_w) & (transformed[0, :] >= 0) & \
+                    (transformed[1, :] < self.canvas_h) & (transformed[1, :] >= 0)
+        
+        transformed_valid = transformed[:, valid_mask]
+        filtered_opacities = opacities.flatten()[valid_mask]
+        logging.info(f"valid masking in color comp took {time.time() - time_now:.4f} seconds")
+
+        
+        num_removed = xs.shape[0] - transformed_valid.shape[1]
+        logging.debug(f"removed {num_removed} out of bounds pixels, remaining {transformed_valid.shape[1]} pixels")
+        if transformed_valid.shape[1] < 0.05 * self.h * self.w:
+            logging.warning("VERY FEW VALID PIXELS!!!!")
+            return None
+        
+        # Interpolate colors
+        time_now = time.time()
+        target_pixels = fast_interp(transformed_valid, targetImage)
+        current_pixels = fast_interp(transformed_valid, currentCanvas)
+        logging.info(f"interpolation in color comp took {time.time() - time_now:.4f} seconds")
+        
+        # Compute color errors
+        new_pixels = (filtered_opacities[:, np.newaxis]) * optimalColor + (1 - filtered_opacities[:, np.newaxis]) * current_pixels
+        
+        error = np.linalg.norm((new_pixels - target_pixels)) ** 2
+        prior_error = np.linalg.norm((current_pixels - target_pixels)) ** 2
+        
+        return {"newPatchError": error, "oldPatchError": prior_error}
 
     def get_patch_error(self, targetImage, currentCanvas, optimalColor):         
         prior_error = 0

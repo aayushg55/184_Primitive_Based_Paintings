@@ -76,7 +76,7 @@ class Worker:
         self.state.recalculate_score = state.recalculate_score
         self.state.score = best_energy
         logging.debug(f"best random state energy: {best_energy}, energy reduction: {self.state.canvas_score - best_energy}")
-        logging.debug(f"best random state (t,theta,color): {best_primitive.t}, {best_primitive.theta}, {best_primitive.color}")
+        # logging.debug(f"best random state (t,theta,color): {best_primitive.t}, {best_primitive.theta}, {best_primitive.color}")
         return self.state
     
     def random_state(self):

@@ -20,7 +20,6 @@ class State:
         
         self.h, self.w = height_map.shape[:2]
         self.canvas_h, self.canvas_w = self.target.shape[:2]
-        self.buffer = np.zeros_like(target)
         self.recalculate_score = recalculate_score
         
     def energy(self):
@@ -37,7 +36,7 @@ class State:
             logging.debug(f"in energy calc - color: {color}")
             
             cur_time = time.time()
-            err_dict = self.primitive.get_patch_error(self.target, self.current, color)
+            err_dict = self.primitive.get_patch_error_fast(self.target, self.current, color)
             end_time = time.time()
             logging.info(f"patch err took {end_time - cur_time:.4f} seconds")
             
@@ -71,6 +70,5 @@ class State:
             primitive=self.primitive.copy(),
             recalculate_score=self.recalculate_score
         )
-        new_state.buffer = self.buffer.copy()
         return new_state
     
