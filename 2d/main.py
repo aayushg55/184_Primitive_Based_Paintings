@@ -96,15 +96,20 @@ def main():
         logging.warning(f"finished step {i}")
         logging.warning("************************************")
         logging.warning(f"step took {time.time() - cur_time:.6f} seconds")
-    logging.warning("************************************")
-    logging.warning(f"Total time: {time.time() - start_time:.6f} seconds")
+    duration = time.time() - start_time
+
+    logging.error(f"******************************** Stats ************************************")
+    logging.error(f"Total time: {duration:.6f} seconds")
+    logging.error(f"Avg time per step: {(duration / args.num_primitives):.6f} seconds")
+    logging.error(f"Number of energy computations: {((args.num_primitives*args.num_explorations* (args.num_opt_iter + args.num_random_state_trials)))}")
+    logging.error(f"****************************************************************************")
 
     # Save the resulting image
     output_img = (model.current_img * 255).astype(np.uint8)  # Convert back to uint8
     inp_img_name = args.source_img_path.split('/')[-1].split('.')[0]
     out_name = 'out/' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}.jpg"
     cv2.imwrite(out_name, output_img)
-    logging.warning(f"Output image saved to {out_name}")
+    logging.error(f"Output image saved to {out_name}")
     
     file_path = out_name.split('.')[0] + '_primitives.txt'
     write_primitive_details(model, file_path)
