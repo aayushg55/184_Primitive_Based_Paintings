@@ -1,5 +1,4 @@
-python3 main.py --num_explorations 1 \
- --num_opt_iter 1 \
- --num_random_state_trials 1 \
- --num_primitives 1 
- 
+python3 main.py --num_explorations 5 \
+ --num_opt_iter 20 \
+ --num_random_state_trials 30 \
+ --num_primitives 5000  -v warning -p 0.9 --source_img_path "input_images/landscape.jpg"
