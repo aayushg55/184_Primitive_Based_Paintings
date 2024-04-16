@@ -23,7 +23,7 @@ class Model:
         self.num_el = output_h * output_w * 3
         self.background_color = np.mean(source_img, axis=(0, 1))
         
-        self.current_img = np.zeros_like(source_img)
+        self.current_img = np.zeros_like(source_img) + 1
         self.scores = []
         self.primitives = []
         # self.colors = []

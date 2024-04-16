@@ -59,7 +59,7 @@ class BrushStroke2D(Primitives):
         points -= self.c  
         
         transformed = self.R @ points
-        #transformed += self.c
+        # transformed += self.c
         
         return transformed + self.t.reshape((2,1))
 
@@ -136,7 +136,8 @@ class BrushStroke2D(Primitives):
 
         # Filter out zero-opacity pixels early
         time_now = time.time() 
-        mask = opacities > 0
+        mask = opacities > 0 
+        #
         xs, ys = xs[mask], ys[mask]
         opacities = opacities[mask]
         logging.info(f"opacity masking in color comp took {time.time() - time_now:.4f} seconds")
@@ -164,17 +165,18 @@ class BrushStroke2D(Primitives):
         
         # Interpolate colors
         time_now = time.time()
-        image_pixels = fast_interp(transformed_valid, targetImage)
+        target_pixels = fast_interp(transformed_valid, targetImage)
         current_pixels = fast_interp(transformed_valid, currentCanvas)
         logging.info(f"interpolation in color comp took {time.time() - time_now:.4f} seconds")
         
         # Compute optimal colors
-        pix_opt_colors = (image_pixels - (1 - filtered_opacities[:, np.newaxis]) * current_pixels) / filtered_opacities[:, np.newaxis]
+        pix_opt_colors = (target_pixels - (1 - filtered_opacities[:, np.newaxis]) * current_pixels) / filtered_opacities[:, np.newaxis]
+        pix_opt_colors = np.clip(pix_opt_colors, 0, 1)
         
         # Clip and normalize if necessary
-        max_colors = np.max(pix_opt_colors, axis=1, keepdims=True)
-        need_to_scale = (max_colors > 1).squeeze()
-        pix_opt_colors[need_to_scale] /= max_colors[need_to_scale]
+        # max_colors = np.max(pix_opt_colors, axis=1, keepdims=True)
+        # need_to_scale = (max_colors > 1).squeeze()
+        # pix_opt_colors[need_to_scale] /= max_colors[need_to_scale]
 
         # Compute the average color
         optimal_color = np.mean(pix_opt_colors, axis=0)

@@ -104,19 +104,34 @@ def rotate_image(image, angle, scale=1.0):
     center = (w // 2, h // 2)
     diagonal = int(np.sqrt(w**2 + h**2))
     M = cv2.getRotationMatrix2D(center, angle, scale)
-    M[0, 2] += (diagonal - w) // 2
+    #M[0, 2] += (diagonal - w) // 2
     M[1, 2] += (diagonal - h) // 2
     rotated = cv2.warpAffine(image, M, (diagonal, diagonal), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
     return rotated
 
-def translate_and_pad_image(image, x, y, output_size):
+def translate_and_pad_image(image, x, y, prim_shape, output_size):
     (h, w) = output_size
-    canvas = np.zeros((h, w, 4), dtype=np.float32)
-    x_offset = int(max(0, min(w, x)))
-    y_offset = int(max(0, min(h, y)))
-    end_x = min(x_offset + image.shape[1], w)
-    end_y = min(y_offset + image.shape[0], h)
-    canvas[y_offset:end_y, x_offset:end_x, :] = image[:end_y-y_offset, :end_x-x_offset, :]
+    prim_center = (prim_shape[1] // 2, prim_shape[0] // 2)
+    canvas = np.zeros((h, w, image.shape[2]), dtype=image.dtype)  # Ensure matching number of channels and data type
+
+    # Calculate the centered translation offsets
+    x_offset = -prim_center[0] + x
+    y_offset = -prim_center[1] + y
+
+    # Ensure the coordinates are within the bounds of the canvas
+    x_start = max(0, x_offset)
+    y_start = max(0, y_offset)
+    x_end = min(w, x_offset + image.shape[1])
+    y_end = min(h, y_offset + image.shape[0])
+
+    # Calculate the parts of the image to be copied based on the offsets
+    image_x_start = max(0, -x_offset)  # Start copying from here if offset is negative
+    image_y_start = max(0, -y_offset)
+    image_x_end = x_end - x_offset  # End copying here if offset + image width exceeds canvas width
+    image_y_end = y_end - y_offset
+
+    # Copy the image to the canvas
+    canvas[y_start:y_end, x_start:x_end] = image[image_y_start:image_y_end, image_x_start:image_x_end]
     return canvas
 
 def alpha_composite(base, overlay):
@@ -129,7 +144,6 @@ def addStroke(height_map, color, rotation, xshift, yshift, base_image):
     """
     overlay_image should be the 
     """
-    
     color_overlay = np.zeros((height_map.shape[0], height_map.shape[1], 3), dtype=np.float32)
     color_overlay[:,:,0] = color[0]  # Blue channel
     color_overlay[:,:,1] = color[1]  # Green channel
@@ -137,8 +151,67 @@ def addStroke(height_map, color, rotation, xshift, yshift, base_image):
     overlay_image = cv2.merge((color_overlay[:, :, 0], color_overlay[:, :, 1], color_overlay[:, :, 2], height_map))
 
     rotated_overlay = rotate_image(overlay_image, rotation)
-    translated_and_padded_overlay = translate_and_pad_image(rotated_overlay, xshift, yshift, base_image.shape[:2])
+    translated_and_padded_overlay = translate_and_pad_image(rotated_overlay, xshift, yshift, rotated_overlay.shape, base_image.shape[:2])
 
     composite_image = alpha_composite(base_image, translated_and_padded_overlay)  # Assuming base_image is uint8
 
     return composite_image  # If needed in uint8 for display or further processing
+
+
+###############
+
+# def rotate_image(image, angle, scale=1.0):
+#     (h, w) = image.shape[:2]
+#     center = (w // 2, h // 2)
+#     diagonal = int(np.sqrt(w**2 + h**2))
+#     M = cv2.getRotationMatrix2D(center, angle, scale)
+#     M[0, 2] += (diagonal - w) // 2
+#     M[1, 2] += (diagonal - h) // 2
+#     rotated = cv2.warpAffine(image, M, (diagonal, diagonal), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+#     return rotated
+
+# def translate_and_pad_image(image, x, y, prim_shape, output_size):
+#     (h, w) = output_size
+#     prim_center = (prim_shape[1] // 2, prim_shape[0] // 2)
+#     canvas = np.zeros((h, w, image.shape[2]), dtype=image.dtype)  # Ensure matching number of channels and data type
+
+#     # Calculate the centered translation offsets
+#     x_offset = -prim_center[0] + x
+#     y_offset = -prim_center[1] + y
+
+#     # Ensure the coordinates are within the bounds of the canvas
+#     x_start = max(0, x_offset)
+#     y_start = max(0, y_offset)
+#     x_end = min(w, x_offset + image.shape[1])
+#     y_end = min(h, y_offset + image.shape[0])
+
+#     # Calculate the parts of the image to be copied based on the offsets
+#     image_x_start = max(0, -x_offset)  # Start copying from here if offset is negative
+#     image_y_start = max(0, -y_offset)
+#     image_x_end = x_end - x_offset  # End copying here if offset + image width exceeds canvas width
+#     image_y_end = y_end - y_offset
+
+#     # Copy the image to the canvas
+#     canvas[y_start:y_end, x_start:x_end] = image[image_y_start:image_y_end, image_x_start:image_x_end]
+#     return canvas
+
+# def alpha_composite(base, overlay):
+#     alpha_overlay = overlay[:,:,3]
+#     alpha_overlay = np.stack([alpha_overlay]*3, axis=-1)
+#     composite = overlay[:,:,:3] * alpha_overlay + base[:,:,:3] * (1 - alpha_overlay)
+#     return composite
+
+# def addStroke(overlay_image, color, rotation, xshift, yshift, base_image):
+#     color_overlay = np.zeros((overlay_image.shape[0], overlay_image.shape[1], 3), dtype=np.float32)
+#     color_overlay[:,:,0] = color[0] # Blue channel
+#     color_overlay[:,:,1] = color[1] # Green channel
+#     color_overlay[:,:,2] = color[2] # Red channel
+#     overlay_image = cv2.merge((color_overlay[:, :, 0], color_overlay[:, :, 1], color_overlay[:, :, 2], color_overlay))
+
+#     rotated_overlay = rotate_image(overlay_image, rotation)
+#     translated_and_padded_overlay = translate_and_pad_image(rotated_overlay, xshift, yshift, rotated_overlay.shape, base_image.shape[:2])
+#     print(overlay_image.shape)
+
+#     composite_image = alpha_composite(base_image, translated_and_padded_overlay)  # Assuming base_image is uint8
+
+#     return composite_image  # If needed in uint8 for display or further processing

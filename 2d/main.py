@@ -26,7 +26,10 @@ def load_brush_stroke_height_maps():
     overlay_image = load_brush_jpg('2d_stroke_heightmaps/stroke_1.jpg')  # Convert to float
     height_map = 1.0 - cv2.cvtColor(overlay_image, cv2.COLOR_BGR2GRAY) / 255.0
 
-    return [height_map]  # Example of 5 random brush strokes
+    height_map2 = cv2.resize(height_map, (height_map.shape[0]//2, height_map.shape[0]//2), interpolation=cv2.INTER_AREA)
+    height_map3 = cv2.resize(height_map, (3*height_map.shape[0]//4, 3*height_map.shape[0]//4), interpolation=cv2.INTER_AREA)
+    # return [height_map, height_map2]  # Example of 5 random brush strokes
+    return [height_map, height_map2, height_map3]  # Example of 5 random brush strokes
 
 def write_primitive_details(model, file_path):
     with open(file_path, 'w') as file:
