@@ -47,7 +47,7 @@ class Worker:
             if energy < best_energy:
                 best_energy = energy
                 best_primitive = state.primitive
-            logging.info(f"exploration {i} took {time.time() - cur_time:.4f} seconds")
+            logging.info(f"exploration {i} took {time.time() - cur_time:.6f} seconds")
                 
         logging.debug(f"finished explorations, best_energy is {best_energy} with reduction {self.state.canvas_score - best_energy}")
         logging.debug(f"best primitive (t,theta,color): {best_primitive.t}, {best_primitive.theta}, {best_primitive.color}")
@@ -70,7 +70,7 @@ class Worker:
             if energy < best_energy:
                 best_energy = energy
                 best_primitive = state.primitive
-        logging.info(f"best random state took {time.time() - cur_time:.4f} seconds for {self.num_random_state_trials} trials")
+        logging.info(f"best random state took {time.time() - cur_time:.6f} seconds for {self.num_random_state_trials} trials")
 
         self.state.primitive = best_primitive
         self.state.recalculate_score = state.recalculate_score
