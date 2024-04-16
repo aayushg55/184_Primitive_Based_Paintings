@@ -44,11 +44,32 @@ class BrushStroke2D(Primitives):
         self.set_R()
 
     def mutate(self):
-        self.theta += np.random.uniform(0, 30)
-        self.set_R()
-        t_mutation = np.array([np.random.randint(int(-0.05*self.canvas_w), int(0.05*self.canvas_w)), np.random.randint(int(-0.05*self.canvas_h), int(0.05*self.canvas_h))])
-        self.t += t_mutation
-        self.t = np.clip(self.t, np.array([0,0]), np.array([self.canvas_w-25, self.canvas_h-25]))
+        dice = np.random.randint(0, 3)
+        if dice==0:
+            self.theta += np.random.normal()*30
+            self.set_R()
+        elif dice==1:
+            h = self.h
+            w = self.w
+            mutation_w = int(np.random.normal()*0.5*w)
+            mutation_h = int(np.random.normal()*0.5*h)
+            t_mutation = np.array([mutation_w, mutation_h])
+            #t_mutation = np.array([np.random.randint(int(-0.05*self.canvas_w), int(0.05*self.canvas_w)), np.random.randint(int(-0.05*self.canvas_h), int(0.05*self.canvas_h))])
+            self.t += t_mutation
+            self.t = np.clip(self.t, np.array([0,0]), np.array([self.canvas_w-25, self.canvas_h-25]))
+        else:
+            h = self.h
+            w = self.w
+            
+            mutation = np.random.normal()*0.5
+            while mutation <= -0.9:
+                mutation = np.random.normal()*0.5
+            height_map = self.heightMap
+            heightMap_mutate = cv2.resize(height_map, (int(w*(1+mutation)+1), int(h*(1+mutation)+1)), interpolation=cv2.INTER_AREA)
+            self.heightMap=heightMap_mutate
+            self.h = heightMap_mutate.shape[0]
+            self.w = heightMap_mutate.shape[1]
+
         
     def transform(self, x, y): 
         points = np.stack([x, y]).astype(np.float64)

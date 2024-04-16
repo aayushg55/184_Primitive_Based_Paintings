@@ -24,6 +24,7 @@ class Model:
         self.background_color = np.mean(source_img, axis=(0, 1))
         
         self.current_img = np.zeros_like(source_img) + 1
+        #self.current_img = base_img
         self.scores = []
         self.primitives = []
         self.brush_strokes = []
