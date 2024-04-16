@@ -13,7 +13,7 @@ import logging
 
 class Model:
     def __init__(self, source_img, output_h, output_w, num_workers, brush_stroke_height_maps, 
-                 num_explorations, num_opt_iter, num_random_state_trials):
+                 num_explorations, num_opt_iter, num_random_state_trials, discard_probability, num_steps):
         #TODO: decide format of inp & target img (np, etc.)
         self.source_img = source_img
         self.source_h = source_img.shape[0]
@@ -26,6 +26,13 @@ class Model:
         self.current_img = np.zeros_like(source_img) + 1
         self.scores = []
         self.primitives = []
+        self.brush_strokes = []
+        self.num_steps = num_steps
+        self.i = 0
+
+        self.stroke_distribution = np.zeros(len(brush_stroke_height_maps))#np.ones(len(brush_stroke_height_maps)) / len(brush_stroke_height_maps)
+        self.stroke_distribution[0] = 1
+
         # self.colors = []
         
         self.brush_stroke_height_maps = brush_stroke_height_maps
@@ -33,6 +40,7 @@ class Model:
         
         self.workers: List[Worker] = []
         self.num_workers = num_workers
+        self.discard_probability = discard_probability
 
 
         for i in range(num_workers):
@@ -57,6 +65,7 @@ class Model:
             height_map=brush_height_map, 
             target=self.source_img,
             current=self.current_img, 
+            pixel_discard_probability=self.discard_probability,
             score=self.scores[-1],
             canvas_score=self.scores[-1],
         )
@@ -82,13 +91,27 @@ class Model:
         
         logging.debug(f"best energy from all workers' hill climb: {best_energy}")
         return best_state
+    
+    def update_stroke_distribution(self): 
+        # 10 , 3
+        if self.i % (self.num_steps//len(self.brush_stroke_height_maps)) == 0:
+            self.stroke_distribution *= 0
+            b_idx = self.i // (self.num_steps//len(self.brush_stroke_height_maps))
+            # print(b_idx, self.i, self.num_steps//len(self.brush_stroke_height_maps))
+            b_idx = min(b_idx, len(self.brush_stroke_height_maps) - 1)
+            self.stroke_distribution[b_idx] = 1
+            self.discard_probability = self.discard_probability*.8
             
+
     def step(self):
-        brush_idx = np.random.randint(low=0, high=self.num_brush_strokes)
+        brush_idx = np.random.choice(a=self.num_brush_strokes, p=self.stroke_distribution)
+        self.update_stroke_distribution()
+        self.i += 1 
+        
         best_state = self.multiprocess_hill_climb(brush_idx)
-        self.update(best_state)
+        self.update(best_state, brush_idx)
 	        
-    def update(self, best_state):
+    def update(self, best_state, brush_idx):
         prev_img = self.current_img.copy()
         strokeAdded = best_state.height_map
         stroke = best_state.primitive
@@ -100,6 +123,7 @@ class Model:
         img = addStroke(strokeAdded, colour, rotation, translation[0], translation[1], prev_img)
         
         self.scores.append(best_state.score)
+        self.brush_strokes.append(brush_idx)
         logging.debug(f"New score: {best_state.score}")
         self.primitives.append(stroke)
         self.current_img = img

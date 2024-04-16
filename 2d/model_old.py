@@ -55,7 +55,12 @@ class Model:
     def multiprocess_hill_climb(self, brush_idx):
         brush_height_map = self.brush_stroke_height_maps[brush_idx]
         
-        current_state = State(brush_height_map, self.source_img, self.current_img, score = self.scores[-1])
+        current_state = State(
+            brush_height_map, self.source_img, 
+            self.current_img, 
+            pixel_discard_probability=self.discard_probability,
+            score = self.scores[-1]
+        )
         for _ in range(self.num_workers):
             self.state_queue.put(current_state)
             

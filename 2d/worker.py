@@ -81,6 +81,11 @@ class Worker:
     
     def random_state(self):
         # Sets state to have a new randomly perturbed primitive
-        self.state.primitive = BrushStroke2D(self.state.height_map, self.state.canvas_h, self.state.canvas_w)
+        self.state.primitive = BrushStroke2D(
+            self.state.height_map, 
+            self.state.canvas_h, 
+            self.state.canvas_w, 
+            self.state.pixel_discard_probability
+        )
         self.state.recalculate_score = True
         return self.state

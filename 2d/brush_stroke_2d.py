@@ -5,7 +5,7 @@ import logging
 import time
 
 class BrushStroke2D(Primitives):
-    def __init__(self, heightMap, canvas_h, canvas_w, color=np.zeros(3), theta=None, t=None):
+    def __init__(self, heightMap, canvas_h, canvas_w, probability_discard_pixel, color=np.zeros(3), theta=None, t=None):
         self.isBrushed = True
         self.heightMap = heightMap
         
@@ -21,6 +21,8 @@ class BrushStroke2D(Primitives):
         self.c = np.zeros((2,1))
         self.c[0] = self.cx
         self.c[1] = self.cy
+
+        self.p = probability_discard_pixel
         
         if theta == None:
             self.theta = 0
@@ -136,7 +138,11 @@ class BrushStroke2D(Primitives):
 
         # Filter out zero-opacity pixels early
         time_now = time.time() 
-        mask = opacities > 0 
+        ##operation to zero out randomly
+        base_mask = opacities > 0  # basic mask for non-zero opacities
+        random_mask = np.random.rand(*opacities.shape) > self.p  # mask to randomly zero out with probability p
+        mask = base_mask & random_mask  # combine masks: pixels must pass both conditions
+
         #
         xs, ys = xs[mask], ys[mask]
         opacities = opacities[mask]
@@ -159,7 +165,7 @@ class BrushStroke2D(Primitives):
         
         num_removed = xs.shape[0] - transformed_valid.shape[1]
         logging.debug(f"removed {num_removed} out of bounds pixels, remaining {transformed_valid.shape[1]} pixels")
-        if transformed_valid.shape[1] < 0.05 * self.h * self.w:
+        if transformed_valid.shape[1] < 2: #0.01 * self.h * self.w:
             logging.warning("VERY FEW VALID PIXELS!!!!")
             return None
         
@@ -190,6 +196,11 @@ class BrushStroke2D(Primitives):
 
         # Filter out zero-opacity pixels early
         mask = opacities > 0
+        ##operation to zero out randomly
+        base_mask = opacities > 0  # basic mask for non-zero opacities
+        random_mask = np.random.rand(*opacities.shape) > self.p  # mask to randomly zero out with probability p
+        mask = base_mask & random_mask  # combine masks: pixels must pass both conditions
+
         xs, ys = xs[mask], ys[mask]
         opacities = opacities[mask]
 
@@ -211,7 +222,7 @@ class BrushStroke2D(Primitives):
         
         num_removed = xs.shape[0] - transformed_valid.shape[1]
         logging.debug(f"removed {num_removed} out of bounds pixels, remaining {transformed_valid.shape[1]} pixels")
-        if transformed_valid.shape[1] < 0.05 * self.h * self.w:
+        if transformed_valid.shape[1] < 2: #0.01 * self.h * self.w:
             logging.warning("VERY FEW VALID PIXELS!!!!")
             return None
         
@@ -260,7 +271,15 @@ class BrushStroke2D(Primitives):
         return {"newPatchError": error, "oldPatchError": prior_error}
     
     def copy(self):
-        new_primitive = BrushStroke2D(self.heightMap, self.canvas_h, self.canvas_w, self.color.copy(), self.theta, self.t.copy())
+        new_primitive = BrushStroke2D(
+            self.heightMap, 
+            self.canvas_h, self.canvas_w, 
+            self.p,
+            self.color.copy(), self.theta, 
+            self.t.copy()
+        )
+        return new_primitive
+            
         return new_primitive
 
     """

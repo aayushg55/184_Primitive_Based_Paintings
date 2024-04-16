@@ -15,7 +15,9 @@ def parse_args():
     parser.add_argument('--num_random_state_trials', type=int, default=1000, help='Number of random state trials.')
     parser.add_argument('--output_img_path', '-o', type=str, default="out/output.jpg", help='Path to save the output image.')
     parser.add_argument('--num_primitives', type=int, default=100, help='Number of primitives to add')
-    parser.add_argument('--verbosity', '-v', type=str, default='info', help='Verbosity level (debug, info, warning, error, critical)')
+    parser.add_argument('--sample_probability', '-p', type=float, default=.5, help='probability')
+
+    parser.add_argument('--verbosity', '-v', type=str, default='warning', help='Verbosity level (debug, info, warning, error, critical)')
 
     return parser.parse_args()
 
@@ -25,11 +27,14 @@ def load_brush_jpg(name):
 def load_brush_stroke_height_maps():
     overlay_image = load_brush_jpg('2d_stroke_heightmaps/stroke_1.jpg')  # Convert to float
     height_map = 1.0 - cv2.cvtColor(overlay_image, cv2.COLOR_BGR2GRAY) / 255.0
+    height_map2 = cv2.resize(height_map, (3*height_map.shape[0]//4, 3*height_map.shape[1]//4), interpolation=cv2.INTER_AREA)
+    height_map3 = cv2.resize(height_map, (height_map.shape[0]//2, height_map.shape[1]//2), interpolation=cv2.INTER_AREA)
+    height_map4 = cv2.resize(height_map, (height_map.shape[0]//4, height_map.shape[1]//4), interpolation=cv2.INTER_AREA)
+    height_map5 = cv2.resize(height_map, (height_map.shape[0]//8, height_map.shape[1]//4), interpolation=cv2.INTER_AREA)
+    height_map6 = cv2.resize(height_map, (height_map.shape[0]//16, height_map.shape[1]//4), interpolation=cv2.INTER_AREA)
 
-    height_map2 = cv2.resize(height_map, (height_map.shape[0]//2, height_map.shape[0]//2), interpolation=cv2.INTER_AREA)
-    height_map3 = cv2.resize(height_map, (3*height_map.shape[0]//4, 3*height_map.shape[0]//4), interpolation=cv2.INTER_AREA)
     # return [height_map, height_map2]  # Example of 5 random brush strokes
-    return [height_map, height_map2, height_map3]  # Example of 5 random brush strokes
+    return [height_map, height_map2, height_map3, height_map4, height_map5, height_map6]  # Example of 5 random brush strokes
 
 def write_primitive_details(model, file_path):
     with open(file_path, 'w') as file:
@@ -37,8 +42,8 @@ def write_primitive_details(model, file_path):
             t_str = ','.join(map(str, primitive.t))
             theta_str = str(primitive.theta)
             color_str = ','.join(map(str, primitive.color))
-            file.write(f"Primitive {i}: t=[{t_str}], theta={theta_str}, color=[{color_str}]\n")
-            logging.info(f"Primitive {i}: t=[{t_str}], theta={theta_str}, color=[{color_str}]")
+            file.write(f"Primitive {i}: brush_idx={model.brush_strokes[i]}, t=[{t_str}], theta={theta_str}, color=[{color_str}]\n")
+            logging.info(f"Primitive {i}: brush_idx={model.brush_strokes[i]}, t=[{t_str}], theta={theta_str}, color=[{color_str}]")
 
 
 def main():
@@ -78,7 +83,9 @@ def main():
         brush_stroke_height_maps=brush_stroke_height_maps,
         num_explorations=args.num_explorations,
         num_opt_iter=args.num_opt_iter,
-        num_random_state_trials=args.num_random_state_trials
+        num_random_state_trials=args.num_random_state_trials,
+        discard_probability=args.sample_probability,
+        num_steps=args.num_primitives
     )
     
     # Example step or processing (add your actual method calls)
@@ -86,18 +93,20 @@ def main():
     for i in range(args.num_primitives):
         cur_time = time.time()
         model.step()
-        logging.info(f"finished step {i}")
-        logging.info("************************************")
-        logging.info(f"step took {time.time() - cur_time:.4f} seconds")
-        
-    logging.info(f"Total time: {time.time() - start_time:.4f} seconds")
+        logging.warning(f"finished step {i}")
+        logging.warning("************************************")
+        logging.warning(f"step took {time.time() - cur_time:.4f} seconds")
+    logging.warning("************************************")
+    logging.warning(f"Total time: {time.time() - start_time:.4f} seconds")
 
     # Save the resulting image
     output_img = (model.current_img * 255).astype(np.uint8)  # Convert back to uint8
-    cv2.imwrite(args.output_img_path, output_img)
-    logging.info(f"Output image saved to {args.output_img_path}")
+    inp_img_name = args.source_img_path.split('/')[-1].split('.')[0]
+    out_name = 'out/' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}.jpg"
+    cv2.imwrite(out_name, output_img)
+    logging.warning(f"Output image saved to {out_name}")
     
-    file_path = args.output_img_path.split('.')[0] + '_primitives.txt'
+    file_path = out_name.split('.')[0] + '_primitives.txt'
     write_primitive_details(model, file_path)
 
 if __name__ == '__main__':

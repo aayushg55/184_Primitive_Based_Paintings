@@ -75,6 +75,6 @@ class Worker(multiprocessing.Process):
     
     def random_state(self):
         # Sets state to have a new randomly perturbed primitive
-        self.state.primitive = BrushStroke2D(self.state.height_map)
+        self.state.primitive = BrushStroke2D(self.state.height_map, self.state.primitive.brush_idx)
         # self.state.score = -1
         return self.state

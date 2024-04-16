@@ -5,7 +5,7 @@ import logging
 import time
 
 class State:
-    def __init__(self, height_map, target, current, score=np.inf, canvas_score=np.inf, primitive=None, recalculate_score=False):
+    def __init__(self, height_map, target, current, pixel_discard_probability, score=np.inf, canvas_score=np.inf, primitive=None, recalculate_score=False):
         self.target = target
         self.current = current
         
@@ -21,6 +21,7 @@ class State:
         self.h, self.w = height_map.shape[:2]
         self.canvas_h, self.canvas_w = self.target.shape[:2]
         self.recalculate_score = recalculate_score
+        self.pixel_discard_probability = pixel_discard_probability
         
     def energy(self):
         if self.recalculate_score:
@@ -66,6 +67,7 @@ class State:
             target=self.target, 
             current=self.current,
             score=self.score, 
+            pixel_discard_probability=self.pixel_discard_probability,
             canvas_score=self.canvas_score, 
             primitive=self.primitive.copy(),
             recalculate_score=self.recalculate_score
