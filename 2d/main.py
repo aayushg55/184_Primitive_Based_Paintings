@@ -95,9 +95,9 @@ def main():
         model.step()
         logging.warning(f"finished step {i}")
         logging.warning("************************************")
-        logging.warning(f"step took {time.time() - cur_time:.4f} seconds")
+        logging.warning(f"step took {time.time() - cur_time:.6f} seconds")
     logging.warning("************************************")
-    logging.warning(f"Total time: {time.time() - start_time:.4f} seconds")
+    logging.warning(f"Total time: {time.time() - start_time:.6f} seconds")
 
     # Save the resulting image
     output_img = (model.current_img * 255).astype(np.uint8)  # Convert back to uint8

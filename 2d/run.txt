@@ -2,3 +2,13 @@ python3 main.py --num_explorations 5 \
  --num_opt_iter 20 \
  --num_random_state_trials 30 \
  --num_primitives 5000  -v warning -p 0.9 --source_img_path "input_images/landscape.jpg"
+
+ meshgrid in color comp took 0.000022 seconds
+opacity mask creation took 0.000090 seconds
+opacity masking in color comp took 0.000101 seconds
+valid masking in color comp took 0.000034 seconds
+interpolation in color comp took 0.000079 seconds
+actual optimal color computation took 0.000037 seconds
+total time inside optimal color fast: 0.000430
+
+0.000022 + 0.000090 +  0.000101 + 0.000034 + 0.000079 + 0.000037 

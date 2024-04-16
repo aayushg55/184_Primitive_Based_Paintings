@@ -128,28 +128,92 @@ class BrushStroke2D(Primitives):
         self.color = optimal_color / num_pixels
         return self.color
 
+    def optimal_color_and_error_fast(self, targetImage, currentCanvas):
+        # Generate a grid of coordinates
+        total_time = 0.0
+        xs, ys = np.meshgrid(np.arange(self.w, dtype=float), np.arange(self.h, dtype=float))
+        opacities = self.heightMap
+
+        # Filter out zero-opacity pixels early
+        time_now = time.time()
+        # TODO: is p mask giving speedup? remove potentially (66.7s without vs 61.64 with at 1500 prim 5 exp, 10 hc, 10 rs)
+        mask = (opacities > 0) & (np.random.rand(*opacities.shape) > self.p) # mask to randomly zero out with probability p
+        xs, ys = xs[mask], ys[mask]
+        opacities = opacities[mask]
+        logging.info(f"opacity mask creation and masking took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
+
+        num_removed = self.h*self.w - xs.shape[0]
+        logging.debug(f"removed {num_removed} zero opacity pixels, remaining {xs.shape[0]} pixels")
+
+        # Transform coordinates and apply boundary check
+        time_now = time.time()
+        transformed = self.transform(xs, ys)
+        valid_mask = (transformed[0, :] < self.canvas_w) & (transformed[0, :] >= 0) & \
+                    (transformed[1, :] < self.canvas_h) & (transformed[1, :] >= 0)
+        transformed_valid = transformed[:, valid_mask]
+        filtered_opacities = opacities.flatten()[valid_mask]
+        logging.info(f"valid masking in color comp took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
+
+        num_removed = xs.shape[0] - transformed_valid.shape[1]
+        logging.debug(f"removed {num_removed} out of bounds pixels, remaining {transformed_valid.shape[1]} pixels")
+        if transformed_valid.shape[1] < 2:
+            logging.error("VERY FEW VALID PIXELS!!!!")
+            return None, None
+
+        # Interpolate colors
+        time_now = time.time()
+        target_pixels, current_pixels = fast_interp_two(transformed_valid, targetImage, currentCanvas)
+        # target_pixels = fast_interp(transformed_valid, targetImage)
+        # current_pixels = fast_interp(transformed_valid, currentCanvas)
+        logging.info(f"interpolation in color comp took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
+
+        # Compute optimal colors
+        time_now = time.time()
+        pix_opt_colors = (target_pixels - (1 - filtered_opacities[:, np.newaxis]) * current_pixels) / filtered_opacities[:, np.newaxis]
+        pix_opt_colors = np.clip(pix_opt_colors, 0, 1)
+        optimal_color = np.mean(pix_opt_colors, axis=0)
+        self.color = optimal_color
+        logging.info(f"actual optimal color computation took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
+
+        # Compute color errors
+        time_now = time.time()
+        new_pixels = (filtered_opacities[:, np.newaxis]) * optimal_color + (1 - filtered_opacities[:, np.newaxis]) * current_pixels
+        error = np.sum((new_pixels - target_pixels) ** 2)
+        prior_error = np.sum((current_pixels - target_pixels) ** 2)
+        logging.info(f"actual error computation took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
+
+        logging.info(f"total time inside optimal color and error fast: {total_time:.6f} seconds")
+        return optimal_color, {"newPatchError": error, "oldPatchError": prior_error}
     
     def optimal_color_fast(self, targetImage, currentCanvas):
         # Generate a grid of coordinates
+        total_time = 0.0
         time_now = time.time() 
         xs, ys = np.meshgrid(np.arange(self.w, dtype=float), np.arange(self.h, dtype=float))
         opacities = self.heightMap
-        logging.info(f"meshgrid in color comp took {time.time() - time_now:.4f} seconds")
-
-        # Filter out zero-opacity pixels early
+        logging.info(f"meshgrid in color comp took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
+        
         time_now = time.time() 
-        ##operation to zero out randomly
         base_mask = opacities > 0  # basic mask for non-zero opacities
         random_mask = np.random.rand(*opacities.shape) > self.p  # mask to randomly zero out with probability p
         mask = base_mask & random_mask  # combine masks: pixels must pass both conditions
+        logging.info(f"opacity mask creation took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
 
-        #
+        time_now = time.time()
         xs, ys = xs[mask], ys[mask]
         opacities = opacities[mask]
-        logging.info(f"opacity masking in color comp took {time.time() - time_now:.4f} seconds")
+        logging.info(f"opacity masking in color comp took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
 
         num_removed = self.h*self.w - xs.shape[0]
-        logging.debug(f"removed {num_removed} zero opacity pixels, remaining {xs.shape[0]} pixels, mean opacity {np.mean(opacities)}")
+        logging.debug(f"removed {num_removed} zero opacity pixels, remaining {xs.shape[0]} pixels")
         # if num_removed > 0.75 * self.h * self.w:
         #     logging.warning("REMOVED MANY zero-opacity pixels!!")
 
@@ -161,48 +225,53 @@ class BrushStroke2D(Primitives):
         
         transformed_valid = transformed[:, valid_mask]
         filtered_opacities = opacities.flatten()[valid_mask]
-        logging.info(f"valid masking in color comp took {time.time() - time_now:.4f} seconds")
-        
+        logging.info(f"valid masking in color comp took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
+
         num_removed = xs.shape[0] - transformed_valid.shape[1]
         logging.debug(f"removed {num_removed} out of bounds pixels, remaining {transformed_valid.shape[1]} pixels")
         if transformed_valid.shape[1] < 2: #0.01 * self.h * self.w:
-            logging.warning("VERY FEW VALID PIXELS!!!!")
+            logging.error("VERY FEW VALID PIXELS!!!!")
             return None
         
         # Interpolate colors
         time_now = time.time()
         target_pixels = fast_interp(transformed_valid, targetImage)
         current_pixels = fast_interp(transformed_valid, currentCanvas)
-        logging.info(f"interpolation in color comp took {time.time() - time_now:.4f} seconds")
-        
+        logging.info(f"interpolation in color comp took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
+
         # Compute optimal colors
+        time_now = time.time()
         pix_opt_colors = (target_pixels - (1 - filtered_opacities[:, np.newaxis]) * current_pixels) / filtered_opacities[:, np.newaxis]
         pix_opt_colors = np.clip(pix_opt_colors, 0, 1)
         
-        # Clip and normalize if necessary
-        # max_colors = np.max(pix_opt_colors, axis=1, keepdims=True)
-        # need_to_scale = (max_colors > 1).squeeze()
-        # pix_opt_colors[need_to_scale] /= max_colors[need_to_scale]
 
         # Compute the average color
         optimal_color = np.mean(pix_opt_colors, axis=0)
         self.color = optimal_color
+        logging.info(f"actual optimal color computation took {time.time() - time_now:.6f} seconds")
+        total_time += time.time() - time_now
+        logging.info(f"total time inside optimal color fast: {total_time:.6f} seconds")
         return self.color
 
     def get_patch_error_fast(self, targetImage, currentCanvas, optimalColor):         
         # Generate a grid of coordinates
+        time_now = time.time()
         xs, ys = np.meshgrid(np.arange(self.w, dtype=float), np.arange(self.h, dtype=float))
         opacities = self.heightMap
+        logging.info(f"meshgrid in patch err took {time.time() - time_now:.6f} seconds")
 
         # Filter out zero-opacity pixels early
-        mask = opacities > 0
         ##operation to zero out randomly
+        time_now = time.time()
         base_mask = opacities > 0  # basic mask for non-zero opacities
         random_mask = np.random.rand(*opacities.shape) > self.p  # mask to randomly zero out with probability p
         mask = base_mask & random_mask  # combine masks: pixels must pass both conditions
 
         xs, ys = xs[mask], ys[mask]
         opacities = opacities[mask]
+        logging.info(f"opacity masking in patch err took {time.time() - time_now:.6f} seconds")
 
         num_removed = self.h*self.w - xs.shape[0]
         logging.debug(f"removed {num_removed} zero opacity pixels, remaining {xs.shape[0]} pixels, mean opacity {np.mean(opacities)}")
@@ -217,26 +286,27 @@ class BrushStroke2D(Primitives):
         
         transformed_valid = transformed[:, valid_mask]
         filtered_opacities = opacities.flatten()[valid_mask]
-        logging.info(f"valid masking in color comp took {time.time() - time_now:.4f} seconds")
+        logging.info(f"valid masking in patch err took {time.time() - time_now:.6f} seconds")
 
         
         num_removed = xs.shape[0] - transformed_valid.shape[1]
         logging.debug(f"removed {num_removed} out of bounds pixels, remaining {transformed_valid.shape[1]} pixels")
         if transformed_valid.shape[1] < 2: #0.01 * self.h * self.w:
-            logging.warning("VERY FEW VALID PIXELS!!!!")
+            logging.error("VERY FEW VALID PIXELS!!!!")
             return None
         
         # Interpolate colors
         time_now = time.time()
         target_pixels = fast_interp(transformed_valid, targetImage)
         current_pixels = fast_interp(transformed_valid, currentCanvas)
-        logging.info(f"interpolation in color comp took {time.time() - time_now:.4f} seconds")
+        logging.info(f"interpolation in patch err took {time.time() - time_now:.6f} seconds")
         
         # Compute color errors
+        time_now = time.time()
         new_pixels = (filtered_opacities[:, np.newaxis]) * optimalColor + (1 - filtered_opacities[:, np.newaxis]) * current_pixels
-        
         error = np.linalg.norm((new_pixels - target_pixels)) ** 2
         prior_error = np.linalg.norm((current_pixels - target_pixels)) ** 2
+        logging.info(f"actual error computation took {time.time() - time_now:.6f} seconds")
         
         return {"newPatchError": error, "oldPatchError": prior_error}
 

@@ -94,6 +94,8 @@ class Model:
     
     def update_stroke_distribution(self): 
         # 10 , 3
+        if self.num_steps < 50:
+            return
         if self.i % (self.num_steps//len(self.brush_stroke_height_maps)) == 0:
             self.stroke_distribution *= 0
             b_idx = self.i // (self.num_steps//len(self.brush_stroke_height_maps))
@@ -109,7 +111,9 @@ class Model:
         self.i += 1 
         
         best_state = self.multiprocess_hill_climb(brush_idx)
+        time_now = time.time()
         self.update(best_state, brush_idx)
+        logging.info(f"update took {time.time() - time_now:.6f} seconds")
 	        
     def update(self, best_state, brush_idx):
         prev_img = self.current_img.copy()

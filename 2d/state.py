@@ -26,29 +26,26 @@ class State:
     def energy(self):
         if self.recalculate_score:
             start_time = time.time()
-            # color = self.primitive.optimal_color_full(self.target, self.current)
-            color = self.primitive.optimal_color_fast(self.target, self.current)
+            color, err_dict = self.primitive.optimal_color_and_error_fast(self.target, self.current)
             end_time = time.time()
-            logging.info(f"optimal_color_fast took {end_time - start_time:.4f} seconds")
-            
-            if np.any(color) == None:
+            logging.info(f"optimal_color_and_error_fast took {end_time - start_time:.6f} seconds")
+
+            if np.any(color) == None or err_dict is None:
                 return np.inf
+
             self.primitive.color = color
             logging.debug(f"in energy calc - color: {color}")
-            
-            cur_time = time.time()
-            err_dict = self.primitive.get_patch_error_fast(self.target, self.current, color)
-            end_time = time.time()
-            logging.info(f"patch err took {end_time - cur_time:.4f} seconds")
-            
+
             logging.debug(f"err calc: {err_dict}")
             err_reduction = err_dict['newPatchError'] - err_dict['oldPatchError']
             logging.debug(f"err reduction: {err_reduction}")
-            self.score = self.canvas_score + err_reduction # score for current canvas with current primitive added
-            self.recalculate_score = False 
-            
-            logging.info(f"total energy recalc took {time.time() - start_time:.4f} seconds")
+
+            self.score = self.canvas_score + err_reduction
+            self.recalculate_score = False
+            logging.info(f"total energy recalc took {time.time() - start_time:.6f} seconds\n")
+
         return self.score
+
 
     def do_move(self):
         old_state = self.copy()
