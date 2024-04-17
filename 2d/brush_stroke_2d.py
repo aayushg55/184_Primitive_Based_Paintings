@@ -15,7 +15,8 @@ class BrushStroke2D(Primitives):
         self.canvas_h, self.canvas_w = canvas_h, canvas_w
         self.h = heightMap.shape[0]
         self.w = heightMap.shape[1]
-        
+        self.hc = heightMap.shape[0]
+        self.wc = heightMap.shape[1]
         self.cx = self.w/2
         self.cy = self.h/2
         self.c = np.zeros((2,1))
@@ -60,12 +61,17 @@ class BrushStroke2D(Primitives):
         else:
             h = self.h
             w = self.w
-            
-            mutation = np.random.normal()*0.5
-            while mutation <= -0.9:
-                mutation = np.random.normal()*0.5
+            mutation_w = np.random.normal()*0.5
+            mutation_h = np.random.normal()*0.5
+            while mutation_w <= -0.99 or mutation_h<-0.99:
+                mutation_w = np.random.normal()*0.5
+                mutation_h = np.random.normal()*0.5
+            w_ = int(w*(1+mutation_w)+1)
+            h_ = int(h*(1+mutation_h)+1)
+            if w_>5*self.wc: w_=5*self.wc
+            if h_>5*self.hc: h_=5*self.hc
             height_map = self.heightMap
-            heightMap_mutate = cv2.resize(height_map, (int(w*(1+mutation)+1), int(h*(1+mutation)+1)), interpolation=cv2.INTER_AREA)
+            heightMap_mutate = cv2.resize(height_map, (w_, h_), interpolation=cv2.INTER_AREA)
             self.heightMap=heightMap_mutate
             self.h = heightMap_mutate.shape[0]
             self.w = heightMap_mutate.shape[1]

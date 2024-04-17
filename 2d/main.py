@@ -10,9 +10,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Instantiate and run the model with command line parameters.')
     parser.add_argument('--source_img_path', type=str, default="input_images/britany.jpg", help='Path to the source image file.')
     parser.add_argument('--num_workers', type=int, default=1, help='Number of worker processes.')
-    parser.add_argument('--num_explorations', type=int, default=2, help='Number of exploration steps.')
-    parser.add_argument('--num_opt_iter', type=int, default=50, help='Number of optimization iterations.')
-    parser.add_argument('--num_random_state_trials', type=int, default=4, help='Number of random state trials.')
+    parser.add_argument('--num_explorations', type=int, default=10, help='Number of exploration steps.')
+    parser.add_argument('--num_opt_iter', type=int, default=100, help='Number of optimization iterations.')
+    parser.add_argument('--num_random_state_trials', type=int, default=10, help='Number of random state trials.')
     parser.add_argument('--output_img_path', '-o', type=str, default="out/output.jpg", help='Path to save the output image.')
     parser.add_argument('--num_primitives', type=int, default=100, help='Number of primitives to add')
     parser.add_argument('--sample_probability', '-p', type=float, default=.99, help='probability')
@@ -30,7 +30,7 @@ def load_brush_stroke_height_maps():
     height_map2 = cv2.resize(height_map, (3*height_map.shape[0]//4, 3*height_map.shape[1]//4), interpolation=cv2.INTER_AREA)
     height_map3 = cv2.resize(height_map, (height_map.shape[0]//2, height_map.shape[1]//2), interpolation=cv2.INTER_AREA)
     height_map4 = cv2.resize(height_map, (height_map.shape[0]//4, height_map.shape[1]//4), interpolation=cv2.INTER_AREA)
-    height_map5 = cv2.resize(height_map, (height_map.shape[0]//8, height_map.shape[1]//2), interpolation=cv2.INTER_AREA)
+    height_map5 = cv2.resize(height_map, (height_map.shape[0]//10, height_map.shape[1]//10), interpolation=cv2.INTER_AREA)
     height_map6 = cv2.resize(height_map, (height_map.shape[0]//8, height_map.shape[1]//4), interpolation=cv2.INTER_AREA)
     
     height_map7 = cv2.resize(height_map, (height_map.shape[0]*2, height_map.shape[1]*2), interpolation=cv2.INTER_AREA)
@@ -38,7 +38,7 @@ def load_brush_stroke_height_maps():
     height_map9 = cv2.resize(height_map, (height_map.shape[0]//4, height_map.shape[1]), interpolation=cv2.INTER_AREA)
 
     # return [height_map, height_map2]  # Example of 5 random brush strokes
-    return [height_map8, height_map7, height_map, height_map2, height_map3, height_map9, height_map4, height_map5]  # Example of 5 random brush strokes
+    return [height_map]  # Example of 5 random brush strokes
 
 def write_primitive_details(model, file_path):
     with open(file_path, 'w') as file:

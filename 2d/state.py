@@ -49,8 +49,11 @@ class State:
 
     def do_move(self):
         old_state = self.copy()
-        self.primitive.mutate()
-
+        mutate_p = self.primitive
+        mutate_p.mutate()
+        self.primitive = mutate_p
+        #self.primitive.mutate()
+        
         self.recalculate_score = True
         return old_state
 

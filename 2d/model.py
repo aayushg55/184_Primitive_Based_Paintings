@@ -89,6 +89,7 @@ class Model:
             if energy < best_energy:
                 best_energy = energy
                 best_state = state
+                
         
         logging.debug(f"best energy from all workers' hill climb: {best_energy}")
         return best_state
@@ -118,9 +119,9 @@ class Model:
 	        
     def update(self, best_state, brush_idx):
         prev_img = self.current_img.copy()
-        strokeAdded = best_state.height_map
+        strokeAdded = best_state.primitive.heightMap
+
         stroke = best_state.primitive
-        
         colour = stroke.color
         logging.debug(f"opt color being added {colour}")
         rotation = stroke.theta

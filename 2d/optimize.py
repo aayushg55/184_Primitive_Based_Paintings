@@ -11,6 +11,7 @@ def hill_climb(state: State, num_iter):
         logging.debug(f"hill climb iteration {i}")
         old_state = state.do_move()
         new_energy = state.energy()
+        
         logging.debug(f"new energy: {new_energy}, old energy: {best_energy}")
         if new_energy < best_energy:
             logging.debug(f"accepted move")
@@ -21,5 +22,5 @@ def hill_climb(state: State, num_iter):
             logging.debug(f"rejected move")
             state.undo_move(old_state)
             
-    logging.debug(f"at end of hill climb, best energy var: {best_energy}, best energy in best_state: {best_state.energy()}")    
+    logging.debug(f"at end of hill climb, best energy var: {best_energy}, best energy in best_state: {best_state.energy()}") 
     return best_state.copy()
