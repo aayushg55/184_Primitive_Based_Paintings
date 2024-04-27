@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument('--num_random_state_trials', type=int, default=10, help='Number of random state trials.')
     parser.add_argument('--output_img_path', '-o', type=str, default="out/output.jpg", help='Path to save the output image.')
     parser.add_argument('--num_primitives', type=int, default=100, help='Number of primitives to add')
-    parser.add_argument('--sample_probability', '-p', type=float, default=.99, help='probability')
+    parser.add_argument('--sample_probability', '-p', type=float, default=.0, help='probability')
 
     parser.add_argument('--verbosity', '-v', type=str, default='warning', help='Verbosity level (debug, info, warning, error, critical)')
 
@@ -38,7 +38,7 @@ def load_brush_stroke_height_maps():
     height_map9 = cv2.resize(height_map, (height_map.shape[0]//4, height_map.shape[1]), interpolation=cv2.INTER_AREA)
 
     # return [height_map, height_map2]  # Example of 5 random brush strokes
-    return [height_map]  # Example of 5 random brush strokes
+    return [height_map, height_map2, height_map3, height_map5, height_map6]  # Example of 5 random brush strokes
 
 def write_primitive_details(model, file_path):
     with open(file_path, 'w') as file:
@@ -116,6 +116,12 @@ def main():
     out_name = 'out/' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}.jpg"
     cv2.imwrite(out_name, output_img)
     logging.error(f"Output image saved to {out_name}")
+
+    # Save the resulting heightmap
+    output_height_img = (model.current_height_map / np.max(model.current_height_map) * 255).astype(np.uint8)  # Convert back to uint8
+    out_height_name = 'out/height_map_' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}.jpg"
+    cv2.imwrite(out_height_name, output_height_img)
+    logging.error(f"Output heightmap image saved to {out_height_name}")
     
     file_path = out_name.split('.')[0] + '_primitives.txt'
     write_primitive_details(model, file_path)

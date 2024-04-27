@@ -2,5 +2,5 @@ python3 main.py --num_explorations 10 \
  --num_opt_iter 10 \
  --num_random_state_trials 10 \
  --num_primitives 100 \
- --source_img_path "input_images/britney.jpg"
+ --source_img_path "input_images/beach.jpg"
  

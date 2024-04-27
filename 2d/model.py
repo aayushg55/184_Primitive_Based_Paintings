@@ -24,6 +24,8 @@ class Model:
         self.background_color = np.mean(source_img, axis=(0, 1))
         
         self.current_img = np.zeros_like(source_img) + 1
+        self.current_height_map = np.zeros_like(source_img)
+
         #self.current_img = base_img
         self.scores = []
         self.primitives = []
@@ -127,6 +129,7 @@ class Model:
         rotation = stroke.theta
         translation = stroke.t
         img = addStroke(strokeAdded, colour, rotation, translation[0], translation[1], prev_img)
+        self.current_height_map =  addStroke(strokeAdded, np.array([1,1,1]), rotation, translation[0], translation[1], self.current_height_map)
         
         self.scores.append(best_state.score)
         self.brush_strokes.append(brush_idx)
