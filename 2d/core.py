@@ -158,6 +158,7 @@ def translate_and_pad_image(image, x, y, prim_shape, output_size):
 def alpha_composite(base, overlay):
     alpha_overlay = overlay[:,:,3]
     alpha_overlay = np.stack([alpha_overlay]*3, axis=-1)
+    # print(f"in alpha composite: overlay.shape: {overlay.shape}, base.shape: {base.shape}")
     composite = overlay[:,:,:3] * alpha_overlay + base[:,:,:3] * (1 - alpha_overlay)
     return composite
 
@@ -174,9 +175,31 @@ def addStroke(height_map, color, rotation, xshift, yshift, base_image):
     rotated_overlay = rotate_image(overlay_image, rotation)
     translated_and_padded_overlay = translate_and_pad_image(rotated_overlay, xshift, yshift, rotated_overlay.shape, base_image.shape[:2])
 
-    composite_image = alpha_composite(base_image, translated_and_padded_overlay)  # Assuming base_image is uint8
+    # print(f"in addSTroke: translated_and_padded_overlay.shape: {translated_and_padded_overlay.shape}, base_image.shape: {base_image.shape}")
+    composite_image = alpha_composite(base_image, translated_and_padded_overlay)
 
-    return composite_image  # If needed in uint8 for display or further processing
+    return composite_image
+
+def addToHeightMap(brush_stroke, rotation, xshift, yshift, base_height_map):
+    """
+    overlay_image should be the 
+    """
+    color_overlay = np.ones((brush_stroke.shape[0], brush_stroke.shape[1], 3), dtype=np.float32)
+    overlay_image = cv2.merge((color_overlay[:, :, 0], color_overlay[:, :, 1], color_overlay[:, :, 2], brush_stroke))
+
+    # print(f"brush_stroke.shape: {brush_stroke.shape}, base_height_map.shape: {base_height_map.shape}")
+    rotated_overlay = rotate_image(overlay_image, rotation)
+    translated_and_padded_overlay = translate_and_pad_image(rotated_overlay, xshift, yshift, rotated_overlay.shape, base_height_map.shape[:2])
+
+    composite_height_map = translated_and_padded_overlay[:,:,-1] + base_height_map
+
+    return composite_height_map
+
+def smoothHeightMap(base_height_map, smoothness):
+    kernel_radius = min(base_height_map.shape[0],base_height_map.shape[1])
+    kernel_radius = int(kernel_radius * smoothness) // 2 * 2 + 1
+    map_smoothed = cv2.GaussianBlur(base_height_map, (kernel_radius, kernel_radius), 0)
+    return map_smoothed
 
 
 ###############

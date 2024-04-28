@@ -4,3 +4,9 @@ python3 main.py --num_explorations 10 \
  --num_primitives 100 \
  --source_img_path "input_images/beach.jpg"
  
+
+python3 main.py --num_explorations 2 \
+ --num_opt_iter 20 \
+ --num_random_state_trials 6 \
+ --num_primitives 1000 \
+ --source_img_path "input_images/beach.jpg"

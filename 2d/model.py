@@ -24,8 +24,8 @@ class Model:
         self.background_color = np.mean(source_img, axis=(0, 1))
         
         self.current_img = np.zeros_like(source_img) + 1
-        self.current_height_map = np.zeros_like(source_img)
-
+        self.current_height_map = np.zeros_like(source_img[:,:,0],  dtype=np.float32) # A 2D array
+        
         #self.current_img = base_img
         self.scores = []
         self.primitives = []
@@ -129,8 +129,12 @@ class Model:
         rotation = stroke.theta
         translation = stroke.t
         img = addStroke(strokeAdded, colour, rotation, translation[0], translation[1], prev_img)
-        self.current_height_map =  addStroke(strokeAdded, np.array([1,1,1]), rotation, translation[0], translation[1], self.current_height_map)
-        
+        self.current_height_map =  addToHeightMap(strokeAdded, rotation, translation[0], translation[1], self.current_height_map)
+        if (self.i == self.num_steps//3):
+            print("**********************************Smooth 1**********************************")
+            map_to_be_smoothed = self.current_height_map
+            self.current_height_map = smoothHeightMap(map_to_be_smoothed, 0.125)
+
         self.scores.append(best_state.score)
         self.brush_strokes.append(brush_idx)
         logging.debug(f"New score: {best_state.score}")

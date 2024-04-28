@@ -75,6 +75,12 @@ class BrushStroke2D(Primitives):
             self.heightMap=heightMap_mutate
             self.h = heightMap_mutate.shape[0]
             self.w = heightMap_mutate.shape[1]
+        #mutate opacity
+        random_number = np.random.uniform(0.9, 1.1)
+        while (random_number*np.max(self.heightMap)>1):
+            random_number = np.random.uniform(0.9, 1.1)
+        height_map_alpha = self.heightMap * random_number
+        self.heightMap = height_map_alpha
 
         
     def transform(self, x, y): 

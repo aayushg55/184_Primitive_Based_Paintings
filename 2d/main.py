@@ -8,7 +8,7 @@ import time
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Instantiate and run the model with command line parameters.')
-    parser.add_argument('--source_img_path', type=str, default="input_images/britany.jpg", help='Path to the source image file.')
+    parser.add_argument('--source_img_path', type=str, default="input_images/beach.jpg", help='Path to the source image file.')
     parser.add_argument('--num_workers', type=int, default=1, help='Number of worker processes.')
     parser.add_argument('--num_explorations', type=int, default=10, help='Number of exploration steps.')
     parser.add_argument('--num_opt_iter', type=int, default=100, help='Number of optimization iterations.')
@@ -38,7 +38,7 @@ def load_brush_stroke_height_maps():
     height_map9 = cv2.resize(height_map, (height_map.shape[0]//4, height_map.shape[1]), interpolation=cv2.INTER_AREA)
 
     # return [height_map, height_map2]  # Example of 5 random brush strokes
-    return [height_map, height_map2, height_map3, height_map5, height_map6]  # Example of 5 random brush strokes
+    return [height_map, height_map2, height_map3,height_map2,height_map3,height_map4, height_map6]  # Example of 5 random brush strokes
 
 def write_primitive_details(model, file_path):
     with open(file_path, 'w') as file:
@@ -118,10 +118,13 @@ def main():
     logging.error(f"Output image saved to {out_name}")
 
     # Save the resulting heightmap
+    # TODO: save heightmap as npy file instead
     output_height_img = (model.current_height_map / np.max(model.current_height_map) * 255).astype(np.uint8)  # Convert back to uint8
-    out_height_name = 'out/height_map_' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}.jpg"
-    cv2.imwrite(out_height_name, output_height_img)
-    logging.error(f"Output heightmap image saved to {out_height_name}")
+    out_height_name = 'out/height_map_' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}"
+
+    cv2.imwrite(out_height_name+'.jpg', output_height_img)
+    np.save(out_height_name+'.npy', model.current_height_map)
+    logging.error(f"Output heightmap image saved to {out_height_name+'.jpg'}")
     
     file_path = out_name.split('.')[0] + '_primitives.txt'
     write_primitive_details(model, file_path)

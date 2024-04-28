@@ -1,2 +1,7 @@
 *.obj
 *.pyc
+*.ipynb
+*.npy
+2d/*.ipynb
+2d/*.obj
+2d/mesh_1000.obj
