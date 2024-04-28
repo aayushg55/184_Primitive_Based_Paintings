@@ -129,11 +129,16 @@ class Model:
         rotation = stroke.theta
         translation = stroke.t
         img = addStroke(strokeAdded, colour, rotation, translation[0], translation[1], prev_img)
-        self.current_height_map =  addToHeightMap(strokeAdded, rotation, translation[0], translation[1], self.current_height_map)
-        if (self.i == self.num_steps//3):
+        
+        p_add = .3
+        if np.random.uniform(0, 1)<p_add:
+            self.current_height_map =  addToHeightMap(strokeAdded, rotation, translation[0], translation[1], self.current_height_map)
+        
+        '''if (self.i == self.num_steps//3):
             print("**********************************Smooth 1**********************************")
             map_to_be_smoothed = self.current_height_map
             self.current_height_map = smoothHeightMap(map_to_be_smoothed, 0.125)
+        '''
 
         self.scores.append(best_state.score)
         self.brush_strokes.append(brush_idx)

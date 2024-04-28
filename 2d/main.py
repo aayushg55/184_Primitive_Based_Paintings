@@ -25,7 +25,7 @@ def load_brush_jpg(name):
     return cv2.imread(name, cv2.IMREAD_UNCHANGED).astype(np.float32)
 
 def load_brush_stroke_height_maps():
-    overlay_image = load_brush_jpg('2d_stroke_heightmaps/stroke_1.jpg')  # Convert to float
+    overlay_image = load_brush_jpg('2d_stroke_heightmaps/brush_stroke_2.jpg')  # Convert to float
     height_map = .6*(1.0 - cv2.cvtColor(overlay_image, cv2.COLOR_BGR2GRAY) / 255.0)
     height_map2 = cv2.resize(height_map, (3*height_map.shape[0]//4, 3*height_map.shape[1]//4), interpolation=cv2.INTER_AREA)
     height_map3 = cv2.resize(height_map, (height_map.shape[0]//2, height_map.shape[1]//2), interpolation=cv2.INTER_AREA)
