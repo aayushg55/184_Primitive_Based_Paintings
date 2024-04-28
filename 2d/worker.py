@@ -35,11 +35,17 @@ class Worker:
         for i in range(self.num_explorations):
             cur_time = time.time()
             logging.debug(f"exploration: {i}")
+            # Find the best random state
             state = self.best_random_state()
             logging.debug(f"found best random state")
+            
             start_energy = state.energy()
+            
+            # Hill climb from the best random state
             logging.debug(f"about to hill climb")
+            # print(f"The state before hill climbing is {state.primitive.t} and  {state.primitive.theta}")
             state = hill_climb(state, self.num_opt_iter)
+            # print(f"The state after hill climbing is {state.primitive.t} and  {state.primitive.theta}")
             logging.debug(f"hill climbed")
             logging.debug(f"hc primitive (t,theta,color): {state.primitive.t}, {state.primitive.theta}, {state.primitive.color}")
 
@@ -63,6 +69,7 @@ class Worker:
         best_primitive = None
         
         cur_time = time.time()
+        # Try a bunch of random states and pick the best one
         for i in range(self.num_random_state_trials):
             state = self.random_state()
             logging.debug(f"iter: {i}. trying random state: {state.primitive.t},  {state.primitive.theta}")

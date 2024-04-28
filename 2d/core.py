@@ -191,7 +191,26 @@ def addToHeightMap(brush_stroke, rotation, xshift, yshift, base_height_map):
     rotated_overlay = rotate_image(overlay_image, rotation)
     translated_and_padded_overlay = translate_and_pad_image(rotated_overlay, xshift, yshift, rotated_overlay.shape, base_height_map.shape[:2])
 
-    composite_height_map = translated_and_padded_overlay[:,:,-1] + base_height_map
+    final_brush_stroke = translated_and_padded_overlay[:,:,-1]
+    
+    #mean_paint_in_brush = np.sum(final_brush_stroke)
+    #mean_paint_on_canvas = np.mean(base_height_map)
+    mask = final_brush_stroke > 0
+    mean_paint_in_affected_section = np.mean(base_height_map[mask])
+
+
+    if mean_paint_in_affected_section > 10: 
+        p = .01
+    elif mean_paint_in_affected_section > 5:
+        p = .1
+    elif mean_paint_in_affected_section > 2:
+        p = .5
+    else: 
+        p = 1
+    
+    composite_height_map = base_height_map
+    if np.random.rand() < p: 
+        composite_height_map += final_brush_stroke
 
     return composite_height_map
 

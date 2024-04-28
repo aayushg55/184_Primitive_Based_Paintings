@@ -7,8 +7,9 @@ import time
 class BrushStroke2D(Primitives):
     def __init__(self, heightMap, canvas_h, canvas_w, probability_discard_pixel, color=np.zeros(3), theta=None, t=None):
         self.isBrushed = True
+        # self.heightMap = (heightMap * np.random.uniform(0.5,1)).clip(0,1)
         self.heightMap = heightMap
-        
+
         self.color = color
         
         # y is row, x is col
@@ -47,7 +48,7 @@ class BrushStroke2D(Primitives):
     def mutate(self):
         dice = np.random.randint(0, 3)
         if dice==0:
-            self.theta += np.random.normal()*30
+            self.theta += np.random.normal()*15
             self.set_R()
         elif dice==1:
             h = self.h
@@ -61,13 +62,10 @@ class BrushStroke2D(Primitives):
         else:
             h = self.h
             w = self.w
-            mutation_w = np.random.normal()*0.5
-            mutation_h = np.random.normal()*0.5
-            while mutation_w <= -0.99 or mutation_h<-0.99:
-                mutation_w = np.random.normal()*0.5
-                mutation_h = np.random.normal()*0.5
-            w_ = int(w*(1+mutation_w)+1)
-            h_ = int(h*(1+mutation_h)+1)
+            mutation_w = np.clip(np.random.normal(1, 0.2), 0, 5)
+            mutation_h = np.clip(np.random.normal(1, 0.2), 0, 5)
+            w_ = int(w*(mutation_w)+1)
+            h_ = int(h*(mutation_h)+1)
             if w_>5*self.wc: w_=5*self.wc
             if h_>5*self.hc: h_=5*self.hc
             height_map = self.heightMap
@@ -77,9 +75,10 @@ class BrushStroke2D(Primitives):
             self.w = heightMap_mutate.shape[1]
         #mutate opacity
         random_number = np.random.uniform(0.9, 1.1)
-        while (random_number*np.max(self.heightMap)>1):
-            random_number = np.random.uniform(0.9, 1.1)
+        # while (random_number*np.max(self.heightMap)>1):
+        #     random_number = np.random.uniform(0.9, 1.1)
         height_map_alpha = self.heightMap * random_number
+        height_map_alpha /= np.max(height_map_alpha)
         self.heightMap = height_map_alpha
 
         

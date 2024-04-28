@@ -5,3 +5,6 @@
 2d/*.ipynb
 2d/*.obj
 2d/mesh_1000.obj
+*.txt
+2d/out/*.txt
+2d/out/log_*.txt

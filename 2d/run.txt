@@ -10,3 +10,52 @@ python3 main.py --num_explorations 2 \
  --num_random_state_trials 6 \
  --num_primitives 1000 \
  --source_img_path "input_images/beach.jpg"
+
+python3 main.py --num_explorations 4 \
+ --num_opt_iter 100 \
+ --num_random_state_trials 10 \
+ --num_primitives 100 \
+ -p 0.0 \
+ -v verbose \
+ --redirect_stdout False \
+ --source_img_path "input_images/turtoise.jpg"
+
+python3 main.py --num_explorations 4 \
+ --num_opt_iter 100 \
+ --num_random_state_trials 10 \
+ --num_primitives 100 \
+ -p 0.0 \
+ -v verbose \
+ --redirect_stdout 1 \
+ --source_img_path "input_images/turtoise.jpg"
+
+python3 main.py --num_explorations 2 \
+ --num_opt_iter 25 \
+ --num_random_state_trials 200 \
+ --num_primitives 5000 \
+ -p 0.0 \
+ -v warning \
+ --redirect_stdout 0 \
+ --brush_img_path "2d_stroke_heightmaps/Stroke1.jpg" \
+ --source_img_path "input_images/lake.jpg"
+
+2d_stroke_heightmaps/brush_stroke_2.jpg
+
+python3 main.py --num_explorations 2 \
+ --num_opt_iter 40 \
+ --num_random_state_trials 200 \
+ --num_primitives 5000 \
+ -p 0.0 \
+ -v debug \
+ --source_img_path "input_images/forest.jpg"
+
+
+python3 main.py --num_explorations 2 \
+ --num_opt_iter 25 \
+ --num_random_state_trials 202 \
+ --num_primitives 5000 \
+ -p 0.95 \
+ -v warning \
+ --redirect_stdout 0 \
+ --brush_img_path "2d_stroke_heightmaps/Stroke1.jpg" \
+ --source_img_path "input_images/forest.jpg"
