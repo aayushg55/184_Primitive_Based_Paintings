@@ -47,10 +47,10 @@ class State:
         return self.score
 
 
-    def do_move(self):
+    def do_move(self, dice=None):
         old_state = self.copy()
         mutate_p = self.primitive
-        mutate_p.mutate()
+        mutate_p.mutate(dice)
         self.primitive = mutate_p
         logging.info(f"primitive mutated: {self.primitive.t}, {self.primitive.theta}, {self.primitive.color}")
         #self.primitive.mutate()

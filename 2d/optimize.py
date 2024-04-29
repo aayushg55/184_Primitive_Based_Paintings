@@ -11,7 +11,16 @@ def hill_climb(state: State, num_iter):
     for i in range(num_iter):
         # print(f"On iteration {i}")
         logging.info(f"hill climb iteration {i}")
-        old_state = state.do_move()
+
+        completion_ratio = i/num_iter
+        if completion_ratio < .33: 
+            dice = 0
+        elif completion_ratio < .67: 
+            dice =1 
+        else: 
+            dice =2
+
+        old_state = state.do_move(dice)
         # print(f"old state is {old_state.primitive.t} and  {old_state.primitive.theta}")
         # print(f"the new state is {state.primitive.t} and  {state.primitive.theta}")
         new_energy = state.energy()

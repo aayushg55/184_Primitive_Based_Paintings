@@ -49,12 +49,13 @@ class BrushStroke2D(Primitives):
         self.theta = np.random.uniform(0, 180)
         self.set_R()
 
-    def mutate(self):
-        dice = np.random.randint(0, 3) # 3 before
-        if dice==0:
+    def mutate(self, dice=None):
+        if not dice: 
+            dice = np.random.randint(0, 3) # 3 before
+        if dice==1:
             self.theta += np.random.normal()*15 # 30 before
             self.set_R()
-        elif dice==1:
+        elif dice==0:
             h = self.h
             w = self.w
             mutation_w = int(np.random.normal()*0.2*w) # 0.5 before
@@ -66,8 +67,8 @@ class BrushStroke2D(Primitives):
         else:
             h = self.h
             w = self.w
-            mutation_w = np.clip(np.random.normal(1, 0.2), 0, 5)
-            mutation_h = np.clip(np.random.normal(1, 0.2), 0, 5)
+            mutation_w = np.clip(np.random.normal(1, 0.1), 0, 5)
+            mutation_h = np.clip(np.random.normal(1, 0.1), 0, 5)
             w_ = int(w*(mutation_w)+1)
             h_ = int(h*(mutation_h)+1)
             if w_>5*self.wc: w_=5*self.wc
@@ -340,7 +341,7 @@ class BrushStroke2D(Primitives):
     
     def copy(self):
         new_primitive = BrushStroke2D(
-            self.heightMap, 
+            self.heightMap.copy(), 
             self.canvas_h, self.canvas_w, 
             self.p,
             self.color.copy(), self.theta, 

@@ -87,6 +87,9 @@ def load_brush_stroke_height_maps(path):
     height_map_10_10 = cv2.resize(height_map, (height_map.shape[0]//10, height_map.shape[1]//10), interpolation=cv2.INTER_AREA)
     brush_strokes.append(height_map_10_10)
    
+    height_map_15_15 = cv2.resize(height_map, (height_map.shape[0]//12, height_map.shape[1]//4), interpolation=cv2.INTER_AREA)
+    brush_strokes.append(height_map_15_15)
+   
     return brush_strokes
 
 def write_primitive_details(model, file_path):

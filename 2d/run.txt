@@ -72,13 +72,63 @@ python3 main.py --num_explorations 2 \
  --source_img_path "input_images/whale.jpg" 
 
 python3 main.py --num_explorations 2 \
- --num_opt_iter 25 \
+ --num_opt_iter 500 \
  --num_random_state_trials 500 \
  --num_primitives 5000 \
- -p 0.0 \
+ -p 0.95 \
  -v error \
  --redirect_stdout 0 \
  --brush_img_path "2d_stroke_heightmaps/Stroke1.jpg" \
+ --source_img_path "input_images/forest.jpg" 
+
+python3 main.py --num_explorations 2 \
+ --num_opt_iter 25 \
+ --num_random_state_trials 200 \
+ --num_primitives 10000 \
+ -p 0.95 \
+ -v error \
+ --redirect_stdout 0 \
+ --brush_img_path "2d_stroke_heightmaps/Stroke1.jpg" \
+ --source_img_path "input_images/forest.jpg" 
+
+python3 main.py --num_explorations 2 \
+ --num_opt_iter 25 \
+ --num_random_state_trials 200 \
+ --num_primitives 10000 \
+ -p 0.95 \
+ -v error \
+ --redirect_stdout 0 \
+ --brush_img_path "2d_stroke_heightmaps/Stroke1.jpg" \
+ --source_img_path "input_images/bird.jpg" 
+
+python3 main.py --num_explorations 2 \
+ --num_opt_iter 25 \
+ --num_random_state_trials 201 \
+ --num_primitives 10000 \
+ -p 0.95 \
+ -v error \
+ --redirect_stdout 0 \
+ --brush_img_path "2d_stroke_heightmaps/Stroke1.jpg" \
+ --source_img_path "input_images/turtoise.jpg"
+
+python3 main.py --num_explorations 2 \
+ --num_opt_iter 25 \
+ --num_random_state_trials 201 \
+ --num_primitives 10000 \
+ -p 0.95 \
+ -v error \
+ --redirect_stdout 0 \
+ --brush_img_path "2d_stroke_heightmaps/Stroke1.jpg" \
+ --source_img_path "input_images/britany.jpg"
+
+python3 main.py --num_explorations 2 \
+ --num_opt_iter 25 \
+ --num_random_state_trials 51 \
+ --num_primitives 1000 \
+ -p 0.95 \
+ -v error \
+ --redirect_stdout 0 \
+ --brush_img_path "2d_stroke_heightmaps/stroke_1_o.jpg" \
  --source_img_path "input_images/forest.jpg" 
 
 python3 main.py --num_explorations 1 \
