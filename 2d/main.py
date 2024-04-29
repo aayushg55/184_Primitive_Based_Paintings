@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument('--num_primitives', type=int, default=100, help='Number of primitives to add')
     parser.add_argument('--sample_probability', '-p', type=float, default=.9, help='probability')
     parser.add_argument('--redirect_stdout', '-r', type=int, default=0, help='Redirect stdout to a file')
-    parser.add_argument('--verbosity', '-v', type=str, default='warning', help='Verbosity level (debug, info, warning, error, critical)')
+    parser.add_argument('--verbosity', '-v', type=str, default='error', help='Verbosity level (debug, info, warning, error, critical)')
 
     return parser.parse_args()
 
@@ -96,7 +96,7 @@ def write_primitive_details(model, file_path):
             theta_str = str(primitive.theta)
             color_str = ','.join(map(str, primitive.color))
             file.write(f"Primitive {i}: brush_idx={model.brush_strokes[i]}, t=[{t_str}], theta={theta_str}, color=[{color_str}]\n")
-            logging.info(f"Primitive {i}: brush_idx={model.brush_strokes[i]}, t=[{t_str}], theta={theta_str}, color=[{color_str}]")
+            logging.warning(f"Primitive {i}: brush_idx={model.brush_strokes[i]}, t=[{t_str}], theta={theta_str}, color=[{color_str}]")
 
 
 def main():
@@ -109,7 +109,7 @@ def main():
         'error': logging.ERROR,
         'critical': logging.CRITICAL
     }
-    log_level = verbosity_map.get(args.verbosity.lower(), logging.INFO)
+    log_level = verbosity_map.get(args.verbosity.lower(), logging.ERROR)
     print(f"Setting log level to {args.verbosity.lower()}")
     print(f"Redirecting stdout to file: {args.redirect_stdout}")
     
@@ -158,22 +158,23 @@ def main():
     
     out_name = 'out/' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}"
     os.makedirs(out_name, exist_ok=True)
-    logging.warning(f"Output will be saved to {out_name}")
+    out_dir_name = out_name
+    logging.error(f"Output will be saved to {out_name}")
     start_time = time.time()
 
     for i in range(args.num_primitives):
         cur_time = time.time()
         model.step()
         
-        logging.warning(f"finished step {i}")
-        logging.warning("*************************************************")
-        logging.warning(f"step took {time.time() - cur_time:.6f} seconds")
+        logging.error(f"finished step {i}")
+        logging.error("*************************************************")
+        logging.error(f"step took {time.time() - cur_time:.6f} seconds")
         
         mod_factor = args.num_primitives // 100
         if mod_factor == 0: mod_factor = 1
         if i % mod_factor == 0:
             iter_name = os.path.join(out_name, f"iter_{i}.jpg")
-            logging.warning(f"Saving image at step {i}")
+            logging.error(f"Saving image at step {i}")
             output_img = (model.current_img * 255).astype(np.uint8)
             cv2.imwrite(iter_name, output_img)
 
@@ -183,26 +184,26 @@ def main():
 
     duration = time.time() - start_time
 
-    logging.error(f"******************************** Stats ************************************")
-    logging.error(f"Total time: {duration:.6f} seconds")
-    logging.error(f"Avg time per step: {(duration / args.num_primitives):.6f} seconds")
-    logging.error(f"Number of energy computations: {((args.num_primitives*args.num_explorations* (args.num_opt_iter + args.num_random_state_trials)))}")
-    logging.error(f"****************************************************************************")
+    logging.critical(f"******************************** Stats ************************************")
+    logging.critical(f"Total time: {duration:.6f} seconds")
+    logging.critical(f"Avg time per step: {(duration / args.num_primitives):.6f} seconds")
+    logging.critical(f"Number of energy computations: {((args.num_primitives*args.num_explorations* (args.num_opt_iter + args.num_random_state_trials)))}")
+    logging.critical(f"****************************************************************************")
 
     # Save the resulting image
     output_img = (model.current_img * 255).astype(np.uint8)  # Convert back to uint8
     
-    final_out_name = out_name + '/' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}.jpg"
+    final_out_name = out_dir_name + '/' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}.jpg"
     cv2.imwrite(final_out_name, output_img)
-    logging.error(f"Output image saved to {out_name}")
+    logging.critical(f"Output image saved to {out_name}")
 
     # Save the resulting heightmap
     output_height_img = (model.current_height_map / np.max(model.current_height_map) * 255).astype(np.uint8)  # Convert back to uint8
-    out_height_name = 'out/height_map_' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}"
+    out_height_name = out_dir_name + '/height_' + inp_img_name + f"_n_expl_{args.num_explorations}_n_o_iter_{args.num_opt_iter}_n_rs_{args.num_random_state_trials}_n_prim_{args.num_primitives}_disc_p_{args.sample_probability}_n_work_{args.num_workers}"
 
     cv2.imwrite(out_height_name+'.jpg', output_height_img)
     np.save(out_height_name+'.npy', model.current_height_map)
-    logging.error(f"Output heightmap image saved to {out_height_name+'.jpg'}")
+    logging.critical(f"Output heightmap image saved to {out_height_name+'.jpg'}")
     
     file_path = out_name.split('.')[0] + '_primitives.txt'
     write_primitive_details(model, file_path)

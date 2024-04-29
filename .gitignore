@@ -6,5 +6,9 @@
 2d/*.obj
 2d/mesh_1000.obj
 *.txt
+2d/out/*.npy
+2d/out/*.obj
+2d/out/*.png
+2d/out/*.jpg
 2d/out/*.txt
 2d/out/log_*.txt

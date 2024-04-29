@@ -24,7 +24,7 @@ class Worker:
     def run(self, state):
         self.state = state
         self.best_hill_climb_state()
-        logging.debug("finished best hill climb in worker \n")
+        logging.info("finished best hill climb in worker \n")
         return self.state
 
 
@@ -34,30 +34,30 @@ class Worker:
         
         for i in range(self.num_explorations):
             cur_time = time.time()
-            logging.debug(f"exploration: {i}")
+            logging.info(f"exploration: {i}")
             # Find the best random state
             state = self.best_random_state()
-            logging.debug(f"found best random state")
+            logging.info(f"found best random state")
             
             start_energy = state.energy()
             
             # Hill climb from the best random state
-            logging.debug(f"about to hill climb")
+            logging.info(f"about to hill climb")
             # print(f"The state before hill climbing is {state.primitive.t} and  {state.primitive.theta}")
             state = hill_climb(state, self.num_opt_iter)
             # print(f"The state after hill climbing is {state.primitive.t} and  {state.primitive.theta}")
-            logging.debug(f"hill climbed")
-            logging.debug(f"hc primitive (t,theta,color): {state.primitive.t}, {state.primitive.theta}, {state.primitive.color}")
+            logging.info(f"hill climbed")
+            logging.info(f"hc primitive (t,theta,color): {state.primitive.t}, {state.primitive.theta}, {state.primitive.color}")
 
             energy = state.energy()
             if energy < best_energy:
                 best_energy = energy
                 best_primitive = state.primitive
                 
-            logging.info(f"exploration {i} took {time.time() - cur_time:.6f} seconds")
+            logging.warning(f"exploration {i} took {time.time() - cur_time:.6f} seconds")
                 
-        logging.debug(f"finished explorations, best_energy is {best_energy} with reduction {self.state.canvas_score - best_energy}")
-        logging.debug(f"best primitive (t,theta,color): {best_primitive.t}, {best_primitive.theta}, {best_primitive.color}")
+        logging.info(f"finished explorations, best_energy is {best_energy} with reduction {self.state.canvas_score - best_energy}")
+        logging.info(f"best primitive (t,theta,color): {best_primitive.t}, {best_primitive.theta}, {best_primitive.color}")
         self.state.primitive = best_primitive
         self.state.recalculate_score = False
         self.state.score = best_energy
@@ -70,21 +70,22 @@ class Worker:
         
         cur_time = time.time()
         # Try a bunch of random states and pick the best one
+        logging.info(f"current canvas score: {self.state.canvas_score}")
         for i in range(self.num_random_state_trials):
             state = self.random_state()
-            logging.debug(f"iter: {i}. trying random state: {state.primitive.t},  {state.primitive.theta}")
+            logging.info(f"iter: {i}. trying random state: {state.primitive.t},  {state.primitive.theta}")
             energy = state.energy()
-            logging.debug(f"random state energy: {energy} ")
+            logging.info(f"random state energy: {energy} ")
             if energy < best_energy:
                 best_energy = energy
                 best_primitive = state.primitive
-        logging.info(f"best random state took {time.time() - cur_time:.6f} seconds for {self.num_random_state_trials} trials")
+        logging.debug(f"best random state took {time.time() - cur_time:.6f} seconds for {self.num_random_state_trials} trials")
 
         self.state.primitive = best_primitive
         self.state.recalculate_score = state.recalculate_score
         self.state.score = best_energy
-        logging.debug(f"best random state energy: {best_energy}, energy reduction: {self.state.canvas_score - best_energy}")
-        # logging.debug(f"best random state (t,theta,color): {best_primitive.t}, {best_primitive.theta}, {best_primitive.color}")
+        logging.info(f"best random state energy: {best_energy}, energy reduction: {self.state.canvas_score - best_energy}")
+        # logging.info(f"best random state (t,theta,color): {best_primitive.t}, {best_primitive.theta}, {best_primitive.color}")
         return self.state
     
     def random_state(self):

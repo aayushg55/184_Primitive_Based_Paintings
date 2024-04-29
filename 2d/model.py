@@ -58,7 +58,7 @@ class Model:
         
         initial_loss = differenceFull(self.current_img, self.source_img)
         self.scores.append(initial_loss)
-        logging.info(f"Initial Score: {initial_loss}")
+        logging.warning(f"Initial Score: {initial_loss}")
         
 
     def multiprocess_hill_climb(self, brush_idx):
@@ -85,7 +85,7 @@ class Model:
         best_energy = np.inf
         best_state = None
         
-        logging.debug("checking best states from all workers' hill climb")
+        logging.info("checking best states from all workers' hill climb")
         for state in best_states:
             energy = state.energy()
             if energy < best_energy:
@@ -93,7 +93,7 @@ class Model:
                 best_state = state
                 
         
-        logging.debug(f"best energy from all workers' hill climb: {best_energy}")
+        logging.info(f"best energy from all workers' hill climb: {best_energy}")
         return best_state
     
     def update_stroke_distribution(self): 
@@ -117,7 +117,7 @@ class Model:
         best_state = self.multiprocess_hill_climb(brush_idx)
         time_now = time.time()
         self.update(best_state, brush_idx)
-        logging.info(f"update took {time.time() - time_now:.6f} seconds")
+        logging.warning(f"update took {time.time() - time_now:.6f} seconds")
 	        
     def update(self, best_state, brush_idx):
         prev_img = self.current_img.copy()
@@ -125,7 +125,7 @@ class Model:
 
         stroke = best_state.primitive
         colour = stroke.color
-        logging.debug(f"opt color being added {colour}")
+        logging.info(f"opt color being added {colour}")
         rotation = stroke.theta
         translation = stroke.t
         img = addStroke(strokeAdded, colour, rotation, translation[0], translation[1], prev_img)
@@ -138,8 +138,8 @@ class Model:
 
         self.scores.append(best_state.score)
         self.brush_strokes.append(brush_idx)
-        logging.debug(f"New score: {best_state.score}")
+        logging.info(f"New score: {best_state.score}")
         self.primitives.append(stroke)
         self.current_img = img
-        logging.debug(f"the largest element of the output image is {np.max(img)}")
+        logging.info(f"the largest element of the output image is {np.max(img)}")
 

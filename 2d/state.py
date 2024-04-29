@@ -28,21 +28,21 @@ class State:
             start_time = time.time()
             color, err_dict = self.primitive.optimal_color_and_error_fast(self.target, self.current)
             end_time = time.time()
-            logging.info(f"optimal_color_and_error_fast took {end_time - start_time:.6f} seconds")
+            logging.debug(f"optimal_color_and_error_fast took {end_time - start_time:.6f} seconds")
 
             if np.any(color) == None or err_dict is None:
                 return np.inf
 
             self.primitive.color = color
-            logging.debug(f"in energy calc - color: {color}")
+            logging.info(f"in energy calc - color: {color}")
 
-            logging.debug(f"err calc: {err_dict}")
+            logging.info(f"err calc: {err_dict}")
             err_reduction = err_dict['newPatchError'] - err_dict['oldPatchError']
-            logging.debug(f"err reduction: {err_reduction}")
+            logging.info(f"err reduction: {err_reduction}")
 
             self.score = self.canvas_score + err_reduction
             self.recalculate_score = False
-            logging.info(f"total energy recalc took {time.time() - start_time:.6f} seconds\n")
+            logging.warning(f"total energy recalc took {time.time() - start_time:.6f} seconds\n")
 
         return self.score
 
@@ -52,6 +52,7 @@ class State:
         mutate_p = self.primitive
         mutate_p.mutate()
         self.primitive = mutate_p
+        logging.info(f"primitive mutated: {self.primitive.t}, {self.primitive.theta}, {self.primitive.color}")
         #self.primitive.mutate()
         
         self.recalculate_score = True
